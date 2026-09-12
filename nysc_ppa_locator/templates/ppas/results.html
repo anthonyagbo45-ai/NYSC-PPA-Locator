@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    @keyframes cardFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-card {
+        animation: cardFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Header & Search Summary -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-emerald-600 font-semibold uppercase tracking-wider mb-1">
+                <i data-lucide="search" class="w-4 h-4"></i> Search Results
+            </div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {% if query %}
+                    Results for "<span class="text-emerald-700">{{ query }}</span>"
+                {% else %}
+                    All Places of Primary Assignment
+                {% endif %}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Showing {{ ppas.paginator.count|default:ppas|length }} location{% if ppas|length != 1 %}s{% endif %}
+                {% if selected_state %} in {{ selected_state.name }}{% endif %}
+                {% if selected_lga %}, {{ selected_lga.name }}{% endif %}
+            </p>
+        </div>
+
+        <!-- Refine Search CTA -->
+        <div>
+            <a href="{% url 'search' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium text-sm rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-emerald-600"></i> Modify Search
+            </a>
+        </div>
+    </div>
+
+    <!-- PPA Grid -->
+    {% if ppas %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for ppa in ppas %}
+                <div class="animate-card bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-emerald-200 transition-all duration-300 flex flex-col justify-between group"
+                     style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+                    
+                    <div>
+                        <!-- Category & Status Badges -->
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                {{ ppa.category|default:"Organization" }}
+                            </span>
+                            {% if ppa.accepting_corpers %}
+                                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Openings Available
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- PPA Title -->
+                        <h2 class="text-xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">
+                            {{ ppa.name }}
+                        </h2>
+
+                        <!-- Location Metadata -->
+                        <div class="space-y-2 mb-6">
+                            <div class="flex items-start gap-2 text-sm text-gray-600">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                <span class="line-clamp-2">{{ ppa.address }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-gray-400 font-medium">
+                                <i data-lucide="globe" class="w-3.5 h-3.5 text-gray-400"></i>
+                                <span>{{ ppa.lga.name }}, {{ ppa.state.name }} State</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Info & Action -->
+                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
+                        <div class="text-xs text-gray-500">
+                            {% if ppa.stipend %}
+                                <span class="font-semibold text-gray-900">₦{{ ppa.stipend }}</span>/mo stipend
+                            {% else %}
+                                <span class="text-gray-400">Stipend unverified</span>
+                            {% endif %}
+                        </div>
+
+                        <a href="{% url 'ppa_detail' ppa.id %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 group-hover:text-emerald-800 transition-colors">
+                            Details <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-hover:translate-x-1"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if ppas.has_other_pages %}
+            <div class="mt-12 flex items-center justify-center gap-2">
+                {% if ppas.has_previous %}
+                    <a href="?page={{ ppas.previous_page_number }}&q={{ query }}&state={{ selected_state.id }}&lga={{ selected_lga.id }}" 
+                       class="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </a>
+                {% endif %}
+
+                <span class="px-4 py-2 text-sm text-gray-600 font-medium">
+                    Page {{ ppas.number }} of {{ ppas.paginator.num_pages }}
+                </span>
+
+                {% if ppas.has_next %}
+                    <a href="?page={{ ppas.next_page_number }}&q={{ query }}&state={{ selected_state.id }}&lga={{ selected_lga.id }}" 
+                       class="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    <!-- Empty State -->
+    {% else %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-12 text-center max-w-2xl mx-auto shadow-sm my-8">
+            <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i data-lucide="map-pin-off" class="w-10 h-10"></i>
+            </div>
+            
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No PPAs Found</h3>
+            <p class="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+                We couldn't find any PPA matching your search criteria. Try adjusting your search query or selecting a different LGA/State filter.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="{% url 'search' %}" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all">
+                    Reset Filters
+                </a>
+                <a href="{% url 'dashboard' %}" class="w-full sm:w-auto px-6 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl border border-gray-200 transition-all">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

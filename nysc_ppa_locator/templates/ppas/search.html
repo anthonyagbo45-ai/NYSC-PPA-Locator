@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYSC PPA Locator | Corps Member Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.8s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Navigation Bar -->
+    <header class="w-full bg-white/85 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center text-white font-bold text-xl shadow-md shadow-emerald-600/20 justify-center">
+                    N
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900">NYSC PPA Locator</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="switchMode('login')" id="nav-login-btn" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition px-3 py-2">Sign In</button>
+                <button onclick="switchMode('register')" id="nav-reg-btn" class="text-sm font-semibold bg-emerald-600 text-white px-5 py-2.5 rounded-xl shadow-sm hover:bg-emerald-700 transition">Register</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="flex-grow flex items-center justify-center px-6 py-12">
+        <div class="max-w-3xl w-full mx-auto text-center animate-fade">
+            
+            <!-- Badge -->
+            <div class="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-100 px-4 py-1.5 rounded-full text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-6">
+                <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                <span>Smart PPA Matching & Verified Database</span>
+            </div>
+
+            <!-- Dynamic Cycling Headline -->
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-4">
+                Find your PPA in <span id="city-cycler" class="text-emerald-600 transition-all duration-500">Lagos</span>
+            </h1>
+            
+            <!-- Updated Copy Section -->
+            <div class="mb-10">
+                <p class="text-lg font-semibold text-slate-800 mb-2">
+                    Your PPA is waiting. Let’s show you the way.
+                </p>
+                <p class="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed">
+                    Register now and get the exact location, directions, and essential information about your PPA.
+                </p>
+            </div>
+
+            <!-- Onboarding / Authentication Card Container -->
+            <div id="portal-form-card" class="bg-white p-8 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 text-left">
+                <div class="mb-8 border-b border-slate-100 pb-4 flex justify-between items-center">
+                    <div>
+                        <h2 id="form-title" class="text-xl font-bold text-slate-900">Corps Member Registration</h2>
+                        <p id="form-subtitle" class="text-sm text-slate-500 mt-1">Enter your deployment details to set up your portal.</p>
+                    </div>
+                    <div class="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-600 rounded-full" id="mode-indicator">
+                        New Account
+                    </div>
+                </div>
+
+                <form action="{% url 'search_results' %}" method="GET" class="space-y-6" autocomplete="off">
+                    
+                    <!-- Row 1: Full Name & Email -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" id="register-fields-group">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Full Name</label>
+                            <input type="text" name="full_name" placeholder="e.g. Adebayo Oluwaseun" 
+                                   class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email Address</label>
+                            <input type="email" name="email" placeholder="e.g. name@gmail.com" autocomplete="off"
+                                   class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: State Code & Password -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">State Code</label>
+                            <input type="text" name="state_code" placeholder="e.g. LA/24A/1234" autocomplete="new-password" required
+                                   class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Password</label>
+                            <input type="password" name="password" placeholder="••••••••••••" autocomplete="new-password" required
+                                   class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Row 3: State Posted & LGA Posted -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" id="posting-fields-group">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">State Posted</label>
+                            <select name="state" id="state-select" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                                <option value="">Select State Posted</option>
+                                {% for state in states %}
+                                    <option value="{{ state.id }}">{{ state.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">LGA Posted</label>
+                            <select name="lga" id="lga-select" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                                <option value="">Select State First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-2">
+                        <button type="submit" id="submit-btn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/25 transition duration-200 flex items-center justify-center space-x-2 text-base">
+                            <span id="submit-btn-text">Access My PPA Portal</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-6 text-center text-xs text-slate-400 border-t border-slate-100">
+        &copy; 2026 NYSC PPA Locator. Built for Nigerian Corps Members.
+    </footer>
+
+    <!-- JavaScript for Dynamic City Cycler, LGA Fetching, and Mode Toggle -->
+    <script>
+        const cities = ["Lagos", "Abuja", "Port Harcourt", "Ibadan", "Enugu", "Kaduna"];
+        let index = 0;
+        const citySpan = document.getElementById('city-cycler');
+        
+        setInterval(() => {
+            index = (index + 1) % cities.length;
+            citySpan.style.opacity = 0;
+            setTimeout(() => {
+                citySpan.textContent = cities[index];
+                citySpan.style.opacity = 1;
+            }, 300);
+        }, 3000);
+
+        function switchMode(mode) {
+            const formTitle = document.getElementById('form-title');
+            const formSubtitle = document.getElementById('form-subtitle');
+            const modeIndicator = document.getElementById('mode-indicator');
+            const registerFieldsGroup = document.getElementById('register-fields-group');
+            const postingFieldsGroup = document.getElementById('posting-fields-group');
+            const submitBtnText = document.getElementById('submit-btn-text');
+
+            if (mode === 'login') {
+                formTitle.textContent = "Corps Member Sign In";
+                formSubtitle.textContent = "Enter your state code and password to access your portal.";
+                modeIndicator.textContent = "Existing User";
+                registerFieldsGroup.style.display = 'none';
+                postingFieldsGroup.style.display = 'none';
+                submitBtnText.textContent = "Access My PPA Portal";
+            } else {
+                formTitle.textContent = "Corps Member Registration";
+                formSubtitle.textContent = "Enter your deployment details to set up your portal.";
+                modeIndicator.textContent = "New Account";
+                registerFieldsGroup.style.display = 'grid';
+                postingFieldsGroup.style.display = 'grid';
+                submitBtnText.textContent = "Access My PPA Portal";
+            }
+        }
+
+        const stateSelect = document.getElementById('state-select');
+        const lgaSelect = document.getElementById('lga-select');
+
+        stateSelect.addEventListener('change', function() {
+            const stateId = this.value;
+            lgaSelect.innerHTML = '<option value="">Select LGA Posted</option>';
+            if (!stateId) return;
+
+            fetch(`/api/load-lgas/?state=${stateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(lga => {
+                        const option = document.createElement('option');
+                        option.value = lga.id;
+                        option.textContent = lga.name;
+                        lgaSelect.appendChild(option);
+                    });
+                })
+                .catch(err => console.error('Error loading LGAs:', err));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="min-h-[80vh] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
+    <!-- Subtle background effect -->
+    <div class="absolute inset-0 z-[-1] bg-gradient-to-b from-emerald-50 to-gray-50"></div>
+    
+    <span class="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold mb-6 shadow-sm border border-emerald-200">
+        NYSC PPA LOCATOR
+    </span>
+    
+    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 h-[100px] flex items-center justify-center">
+        <span>Find your PPA in&nbsp;</span>
+        <span id="typewriter" class="text-emerald-600"></span>
+        <span class="animate-pulse border-r-4 border-emerald-600 h-10 md:h-14 ml-1"></span>
+    </h1>
+    
+    <p class="text-lg text-gray-600 mb-10 max-w-2xl">
+        A premium, modern directory for Nigerian corps members to discover, evaluate, and navigate to their Places of Primary Assignment with ease.
+    </p>
+    
+    <div class="flex flex-col sm:flex-row gap-4">
+        <a href="{% url 'search' %}" class="bg-emerald-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-emerald-700 transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2">
+            Search for PPA <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+        <a href="#how-it-works" class="bg-white text-gray-700 px-8 py-4 rounded-xl font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center justify-center">
+            How It Works
+        </a>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const words = ["Lagos", "Osun", "Abuja", "Oyo"];
+        let i = 0;
+        let timer;
+        const speed = 100; // typing speed
+        const deleteSpeed = 50;
+        const pauseTime = 2000;
+        const el = document.getElementById('typewriter');
+        
+        // Respect prefers-reduced-motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+            el.innerHTML = "Nigeria";
+            document.querySelector('.animate-pulse').style.display = 'none';
+            return;
+        }
+
+        function typingEffect() {
+            let word = words[i].split("");
+            let loopTyping = function() {
+                if (word.length > 0) {
+                    el.innerHTML += word.shift();
+                } else {
+                    setTimeout(deletingEffect, pauseTime);
+                    return;
+                }
+                timer = setTimeout(loopTyping, speed);
+            };
+            loopTyping();
+        }
+
+        function deletingEffect() {
+            let word = words[i].split("");
+            let loopDeleting = function() {
+                if (word.length > 0) {
+                    word.pop();
+                    el.innerHTML = word.join("");
+                } else {
+                    i = (i + 1) % words.length;
+                    setTimeout(typingEffect, speed);
+                    return;
+                }
+                timer = setTimeout(loopDeleting, deleteSpeed);
+            };
+            loopDeleting();
+        }
+        typingEffect();
+    });
+</script>
+{% endblock %}

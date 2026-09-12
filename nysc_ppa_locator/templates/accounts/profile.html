@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+    <!-- Toast Notification -->
+    {% if messages %}
+        {% for message in messages %}
+            <div id="toast" class="mb-6 p-4 rounded-xl text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-sm transition-opacity duration-300">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+                    <span>{{ message }}</span>
+                </div>
+                <button onclick="document.getElementById('toast').remove()" class="text-emerald-600 hover:text-emerald-900">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 font-bold text-xl flex items-center justify-center">
+                {{ user.full_name|slice:":2"|upper|default:"CM" }}
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">User Profile</h1>
+                <p class="text-sm text-gray-500">View and update your personal posting information.</p>
+            </div>
+        </div>
+
+        <form method="POST" id="profileForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" name="full_name" value="{{ user.full_name }}" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                </div>
+
+                <!-- Email (Read-Only) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" value="{{ user.email }}" disabled class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed">
+                    <p class="text-xs text-gray-400 mt-1">Email address cannot be changed.</p>
+                </div>
+
+                <!-- State Code -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State Code</label>
+                    <input type="text" name="state_code" value="{{ user.state_code }}" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                </div>
+
+                <!-- Location Selects -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">State Posted</label>
+                        <select id="stateSelect" name="state_posted" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition bg-white">
+                            <option value="">Select State</option>
+                            {% for state in states %}
+                                <option value="{{ state.id }}" {% if user.state_posted.id == state.id %}selected{% endif %}>{{ state.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">LGA Posted</label>
+                        <select id="lgaSelect" name="lga_posted" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition bg-white">
+                            <option value="">Select LGA</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" id="saveBtn" class="w-full md:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const stateSelect = document.getElementById('stateSelect');
+        const lgaSelect = document.getElementById('lgaSelect');
+        const userLgaId = "{{ user.lga_posted.id|default:'' }}";
+
+        const fetchLGAs = async (stateId, selectedLgaId = null) => {
+            if (!stateId) {
+                lgaSelect.innerHTML = '<option value="">Select State First</option>';
+                lgaSelect.disabled = true;
+                return;
+            }
+            lgaSelect.disabled = true;
+            lgaSelect.innerHTML = '<option value="">Loading...</option>';
+
+            try {
+                const res = await fetch(`/api/load-lgas/?state=${stateId}`);
+                const data = await res.json();
+                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+                data.forEach(lga => {
+                    const isSelected = selectedLgaId == lga.id ? 'selected' : '';
+                    lgaSelect.innerHTML += `<option value="${lga.id}" ${isSelected}>${lga.name}</option>`;
+                });
+                lgaSelect.disabled = false;
+            } catch (err) {
+                lgaSelect.innerHTML = '<option value="">Error loading LGAs</option>';
+            }
+        };
+
+        if (stateSelect.value) {
+            fetchLGAs(stateSelect.value, userLgaId);
+        }
+
+        stateSelect.addEventListener('change', (e) => fetchLGAs(e.target.value));
+
+        // Loading state feedback
+        document.getElementById('profileForm').addEventListener('submit', () => {
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = 'Saving... <span class="animate-spin ml-2">◌</span>';
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+        });
+    });
+</script>
+{% endblock %}

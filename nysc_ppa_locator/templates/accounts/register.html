@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
+        <div>
+            <h2 class="text-center text-3xl font-extrabold text-gray-900">Create Your Account</h2>
+            <p class="mt-2 text-center text-sm text-gray-600">Register to find and explore Places of Primary Assignment.</p>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form class="mt-8 space-y-5" method="POST" id="registerForm">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    {{ form.full_name }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    {{ form.email }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State Code</label>
+                    {{ form.state_code }}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">State Posted</label>
+                        {{ form.state_posted }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">LGA Posted</label>
+                        {{ form.lga_posted }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        {{ form.password }}
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('id_password')">
+                            <i data-lucide="eye" class="h-4 w-4 text-gray-400 hover:text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    {{ form.confirm_password }}
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                Create Account
+            </button>
+        </form>
+        <p class="text-center text-sm text-gray-600">
+            Already have an account? <a href="{% url 'login' %}" class="font-medium text-emerald-600 hover:text-emerald-500 transition">Login</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    // Style Django form inputs with Tailwind
+    document.querySelectorAll('input, select').forEach(el => {
+        el.classList.add('w-full', 'px-4', 'py-3', 'rounded-xl', 'border', 'border-gray-200', 'focus:ring-2', 'focus:ring-emerald-500', 'outline-none', 'transition');
+    });
+
+    // Dynamic LGA Fetching for Registration
+    const stateSelect = document.getElementById('id_state_posted');
+    const lgaSelect = document.getElementById('id_lga_posted');
+
+    stateSelect.addEventListener('change', async (e) => {
+        const stateId = e.target.value;
+        lgaSelect.innerHTML = '<option value="">Loading...</option>';
+        lgaSelect.disabled = true;
+        
+        if (stateId) {
+            const res = await fetch(`/api/load-lgas/?state=${stateId}`);
+            const data = await res.json();
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+            data.forEach(lga => {
+                lgaSelect.innerHTML += `<option value="${lga.id}">${lga.name}</option>`;
+            });
+            lgaSelect.disabled = false;
+        } else {
+            lgaSelect.innerHTML = '<option value="">Select State First</option>';
+        }
+    });
+
+    // Password Toggle
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        field.type = field.type === "password" ? "text" : "password";
+    }
+
+    // Loading State
+    document.getElementById('registerForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = 'Creating Account... <span class="animate-spin ml-2">◌</span>';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+    });
+</script>
+{% endblock %}
