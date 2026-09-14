@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Back Button & Status Messages -->
+    <div class="mb-6 flex items-center justify-between">
+        <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
+        </a>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            PPA Details
+        </span>
+    </div>
+
+    {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main PPA Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="p-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <span class="text-xs font-bold tracking-wider text-emerald-600 uppercase bg-emerald-50 px-3 py-1 rounded-full">
+                        {{ ppa.category|default:"Organization / PPA" }}
+                    </span>
+                    <h1 class="text-3xl font-extrabold text-gray-900 mt-2">{{ ppa.name }}</h1>
+                </div>
+                {% if ppa.latitude and ppa.longitude %}
+                <a href="https://www.google.com/maps/search/?api=1&query={{ ppa.latitude }},{{ ppa.longitude }}" target="_blank" class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow transition gap-2">
+                    <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+                <div class="flex items-start space-x-3">
+                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Address / Location</p>
+                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.address|default:"Address not specified" }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
+                        <i data-lucide="building" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">LGA & State</p>
+                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.lga|default:"N/A" }}, {{ ppa.state|default:"N/A" }}</p>
+                    </div>
+                </div>
+
+                {% if ppa.contact_phone or ppa.phone %}
+                <div class="flex items-start space-x-3">
+                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
+                        <i data-lucide="phone" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Contact Phone</p>
+                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.contact_phone|default:ppa.phone }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if ppa.email %}
+                <div class="flex items-start space-x-3">
+                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Email Address</p>
+                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.email }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if ppa.description %}
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">About this PPA</h3>
+                <p class="text-gray-600 leading-relaxed">{{ ppa.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reviews Section / Corps Member Notes -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i data-lucide="message-square" class="w-5 h-5 text-emerald-600"></i> Corps Member Reviews & Notes
+            </h3>
+        </div>
+
+        {% if reviews %}
+            <div class="space-y-4 mb-8">
+                {% for review in reviews %}
+                    <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800 text-sm">{{ review.user.get_full_name|default:review.user.username }}</span>
+                            <span class="text-xs text-gray-400">{{ review.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">{{ review.comment|default:review.content }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-sm mb-6">No reviews or notes yet for this PPA. Be the first corps member to share your experience!</p>
+        {% endif %}
+
+        <!-- Add Review Form -->
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="comment" class="block text-sm font-semibold text-gray-700 mb-1">Add your review or notes</label>
+                <textarea name="comment" id="comment" rows="3" class="w-full rounded-xl border border-gray-200 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="Share tips about accommodation, allowance, workload, etc."></textarea>
+            </div>
+            <button type="submit" class="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl text-sm transition">
+                Submit Review
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}
