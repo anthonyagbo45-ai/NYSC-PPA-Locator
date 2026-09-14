@@ -1,8 +1,10 @@
+import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.conf import settings
 from .models import PPA, Review
 from locations.models import State, LGA
 
@@ -30,24 +32,20 @@ def portal_entry(request):
             messages.error(request, "State code and password are required.")
             return redirect('landing')
 
-        # Try to authenticate as an existing user (authenticate() accepts 'username' as the USERNAME_FIELD alias)
+        # Try to authenticate as an existing user
         user = authenticate(request, username=state_code, password=password)
         
         if user is not None:
-            # Existing user login
             login(request, user)
         else:
-            # Check if user already exists under this state code
             try:
                 user = User.objects.get(state_code=state_code)
                 messages.error(request, "Invalid password for this state code.")
                 return redirect('landing')
             except User.DoesNotExist:
-                # Fetch State and LGA instances if selected
                 state_obj = State.objects.filter(id=state_id).first() if state_id else None
                 lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
 
-                # Create a new corps member account using state_code
                 user = User.objects.create_user(
                     state_code=state_code,
                     email=email or '',
@@ -55,7 +53,6 @@ def portal_entry(request):
                     first_name=full_name or ''
                 )
                 
-                # Assign state/lga posting fields
                 if hasattr(user, 'state_posted'):
                     user.state_posted = state_obj
                 if hasattr(user, 'lga_posted'):
@@ -126,7 +123,6 @@ def ppa_detail(request, pk):
             messages.error(request, 'Invalid rating submitted.')
             return redirect('ppa_detail', pk=pk)
 
-        # Upsert: updates existing review by user or creates a new one
         review, created = Review.objects.update_or_create(
             ppa=ppa,
             user=request.user,
@@ -157,3 +153,131 @@ def load_lgas(request):
         return JsonResponse([], safe=False)
     lgas = LGA.objects.filter(state_id=state_id).order_by('name')
     return JsonResponse(list(lgas.values('id', 'name')), safe=False)
+
+# Google Places API (New) Integration with optional LGA filtering
+def search_google_places(query, state_name="Nigeria", lga_name=""):
+    """
+    Searches Google Places API (New) for institutions, offices, and businesses in Nigeria.
+    """
+    api_key = settings.GOOGLE_MAPS_API_KEY
+    if not api_key:
+        print("DEBUG: Google Maps API key is missing from settings.")
+        return []
+
+    if lga_name:
+        search_query = f"{query}, {lga_name}, {state_name}, Nigeria"
+    else:
+        search_query = f"{query}, {state_name}, Nigeria"
+        
+    url = "https://places.googleapis.com/v1/places:searchText"
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': api_key,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location'
+    }
+    payload = {'textQuery': search_query}
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        data = response.json()
+        
+        places_list = data.get('places', [])
+        results = []
+        for place in places_list:
+            display_name = place.get('displayName', {}).get('text', '')
+            address = place.get('formattedAddress', '')
+            location = place.get('location', {})
+            
+            results.append({
+                'name': display_name,
+                'address': address,
+                'latitude': location.get('latitude'),
+                'longitude': location.get('longitude'),
+                'place_id': place.get('id'),
+            })
+        return results
+    except Exception as e:
+        print(f"Google Places API Exception: {e}")
+    
+    return []
+
+@login_required
+def save_live_place_view(request):
+    """
+    Saves selected Google Places result with State, LGA, and GPS coordinates.
+    """
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        address = request.POST.get('address')
+        state_id = request.POST.get('state')
+        lga_id = request.POST.get('lga')
+        place_id = request.POST.get('place_id')
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+
+        if not name or not address:
+            messages.error(request, "Invalid place data submitted.")
+            return redirect('live_search')
+
+        state_obj = State.objects.filter(id=state_id).first() if state_id else State.objects.first()
+        lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
+
+        ppa, created = PPA.objects.get_or_create(
+            name=name,
+            defaults={
+                'address': address,
+                'state': state_obj,
+                'lga': lga_obj,
+                'category': 'Public Sector / Organization',
+                'description': f'Discovered via Google Places Live Search (Place ID: {place_id})',
+                'verified': True,
+                'latitude': float(latitude) if latitude else None,
+                'longitude': float(longitude) if longitude else None,
+            }
+        )
+
+        if created:
+            messages.success(request, f"Successfully saved '{name}' to your PPA database! ✓")
+        else:
+            messages.info(request, f"'{name}' already exists in your database.")
+
+        return redirect('live_search')
+        
+    return redirect('live_search')
+
+def dynamic_place_search_view(request):
+    query = request.GET.get('q', '')
+    state_param = request.GET.get('state', '')
+    lga_id = request.GET.get('lga', '')
+    places = []
+
+    states = State.objects.all().order_by('name')
+
+    # Handle state_param whether it's sent as a numeric ID or text name (e.g. 'Benue')
+    state_obj = None
+    if state_param:
+        if str(state_param).isdigit():
+            state_obj = State.objects.filter(id=int(state_param)).first()
+        else:
+            state_obj = State.objects.filter(name__iexact=state_param).first()
+
+    if not state_obj:
+        state_obj = states.first()
+
+    state_name = state_obj.name if state_obj else "Nigeria"
+    state_id = str(state_obj.id) if state_obj else ""
+
+    lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
+    lga_name = lga_obj.name if lga_obj else ""
+
+    if query:
+        places = search_google_places(query, state_name=state_name, lga_name=lga_name)
+
+    context = {
+        'query': query,
+        'states': states,
+        'places': places,
+        'selected_state': state_id,
+        'selected_lga': lga_id,
+    }
+    return render(request, 'ppas/live_search.html', context)

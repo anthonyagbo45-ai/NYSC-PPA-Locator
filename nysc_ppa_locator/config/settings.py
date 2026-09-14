@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security Settings
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-fallback-in-development')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 
 ALLOWED_HOSTS = ['*']
 
@@ -65,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database Configuration (Fixed: Added SQLite ENGINE and NAME)
+# Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

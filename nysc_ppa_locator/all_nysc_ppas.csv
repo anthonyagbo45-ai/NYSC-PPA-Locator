@@ -1,0 +1,38 @@
+name,state,lga,address,category,phone,email,description,verified
+"Federal Government College","Lagos","Ikeja","Agege Motor Road, Ikeja","Education","0123456789","fgc@example.com","Federal secondary school PPA",1
+"Ministry of Justice","Abuja (FCT)","Municipal","Central Business District, Abuja","Public Sector","0987654321","justice@gov.ng","FCT State Secretariat PPA",1
+"State Secretariat","Abia","Umuahia North","Ogwurugwu Road, Umuahia","Public Sector","08030000001","abia@gov.ng","State Government Secretariat",1
+"General Hospital Yola","Adamawa","Yola North","Hospital Road, Jimeta","Healthcare","08030000002","yolahospital@gmail.com","State General Hospital",1
+"Uyo High Court","Akwa Ibom","Uyo","Off Wellington Bassey Way","Public Sector","08030000003","akwahighcourt@gov.ng","Judicial Complex PPA",1
+"Nnamdi Azikiwe University Teaching Hospital","Anambra","Nnewi","Oraifite Road","Healthcare","08030000004","nauth@edu.ng","Federal Teaching Hospital",1
+"Abubakar Tafawa Balewa University","Bauchi","Bauchi","Gubi Campus","Education","08030000005","atbu@edu.ng","Federal University PPA",1
+"Federal Medical Centre Yenagoa","Bayelsa","Yenagoa","Swali Road","Healthcare","08030000006","fmcyenagoa@gov.ng","Federal Medical Centre",1
+"Makurdi Local Government Secretariat","Benue","Makurdi","High Level, Makurdi","Public Sector","08030000007","benuelga@gov.ng","Local Government Council Office",1
+"University of Maiduguri Teaching Hospital","Borno","Maiduguri","Bama Road","Healthcare","08030000008","umth@edu.ng","Federal Teaching Hospital PPA",1
+"University of Calabar","Cross River","Calabar Municipality","Etagbor, Calabar","Education","08030000009","unical@edu.ng","Federal University PPA",1
+"Delta State University Teaching Hospital","Delta","Oshimili South","Oghara Road, Asaba","Healthcare","08030000010","delsuth@edu.ng","State Teaching Hospital",1
+"Ebonyi State University","Ebonyi","Abakaliki","Permanent Site, Presco","Education","08030000011","ebsu@edu.ng","State University PPA",1
+"University of Benin Teaching Hospital","Edo","Ikpoba Okha","Ugbowo, Benin City","Healthcare","08030000012","ubth@org.ng","Federal Teaching Hospital",1
+"Federal Polytechnic Ado-Ekiti","Ekiti","Ado Ekiti","Km 8, Ikare Road","Education","08030000013","fedpolyado@edu.ng","Federal Polytechnic PPA",1
+"University of Nigeria Teaching Hospital","Enugu","Enugu South","Ituku-Ozalla","Healthcare","08030000014","unth@edu.ng","Federal Teaching Hospital",1
+"Federal University Gombe","Gombe","Gombe","Tudun Wada","Education","08030000015","fugombe@edu.ng","Federal University PPA",1
+"Federal Medical Centre Owerri","Imo","Owerri Municipal","Orlu Road","Healthcare","08030000016","fmcowerri@gov.ng","Federal Medical Centre",1
+"Federal University Dutse","Jigawa","Dutse","Ibrahim Aliyu Way","Education","08030000017","fudutse@edu.ng","Federal University PPA",1
+"Ahmadu Bello University","Kaduna","Sabon Gari","Main Campus, Samaru","Education","08030000018","abu@edu.ng","Federal University PPA",1
+"Bayero University Kano","Kano","Kano Municipal","Gwarzo Road","Education","08030000019","buk@edu.ng","Federal University PPA",1
+"Federal Polytechnic Katsina","Katsina","Katsina","Kano Road","Education","08030000035","fedpolykatsina@edu.ng","Federal Polytechnic PPA",1
+"Federal Polytechnic Kebbi","Kebbi","Birnin Kebbi","Kalgo Road","Education","08030000020","fedpolykebbi@edu.ng","Federal Polytechnic PPA",1
+"Federal University Lokoja","Kogi","Lokoja","Adankolo Campus","Education","08030000021","fulokoja@edu.ng","Federal University PPA",1
+"University of Ilorin","Kwara","Ilorin East","Mini Campus Road","Education","08030000022","unilorin@edu.ng","Federal University PPA",1
+"Federal University of Lafia","Nasarawa","Lafia","Makurdi Road","Education","08030000023","fulafia@edu.ng","Federal University PPA",1
+"Federal University of Technology Minna","Niger","Chanchaga","Gidan Kwano Campus","Education","08030000024","futminna@edu.ng","Federal University PPA",1
+"Federal Polytechnic Ilaro","Ogun","Yewa South","Ojudo Road, Ilaro","Education","08030000025","fedpolyilaro@edu.ng","Federal Polytechnic PPA",1
+"Federal University of Technology Akure","Ondo","Akure South","Obakekere, Akure","Education","08030000026","futa@edu.ng","Federal University PPA",1
+"Obafemi Awolowo University","Osun","Ife Central","Ile-Ife","Education","08030000027","oau@edu.ng","Federal University PPA",1
+"University of Ibadan","Oyo","Ibadan North","Oyo Road, Ibadan","Education","08030000028","ui@edu.ng","Federal University PPA",1
+"University of Jos","Plateau","Jos North","Bauchi Road","Education","08030000029","unijos@edu.ng","Federal University PPA",1
+"University of Port Harcourt","Rivers","Obio/Akpor","Choba, Port Harcourt","Education","08030000030","uniport@edu.ng","Federal University PPA",1
+"Usmanu Danfodiyo University","Sokoto","Sokoto North","Wamakko Road","Education","08030000031","udusok@edu.ng","Federal University PPA",1
+"Federal University Wukari","Taraba","Wukari","Katsina-Ala Road","Education","08030000032","fuwukari@edu.ng","Federal University PPA",1
+"Federal University Gashua","Yobe","Nguru","Gashua Road","Education","08030000033","fugashua@edu.ng","Federal University PPA",1
+"Federal University Gusau","Zamfara","Gusau","Mbaba Road","Education","08030000034","fugusau@edu.ng","Federal University PPA",1

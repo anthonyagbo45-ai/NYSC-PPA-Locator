@@ -1,150 +1,170 @@
 {% extends 'base.html' %}
 {% block content %}
-<style>
-    @keyframes cardFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(12px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    .animate-card {
-        animation: cardFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-</style>
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    
+    <!-- Back to Results / Search -->
+    <div class="mb-6">
+        <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Results
+        </a>
+    </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <!-- Header & Search Summary -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-            <div class="flex items-center gap-2 text-sm text-emerald-600 font-semibold uppercase tracking-wider mb-1">
-                <i data-lucide="search" class="w-4 h-4"></i> Search Results
+    <!-- PPA Header Card -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        {{ ppa.category|default:"Organization" }}
+                    </span>
+                    {% if ppa.verified %}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Verified PPA
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Unverified / Community
+                        </span>
+                    {% endif %}
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
+                    {{ ppa.name }}
+                </h1>
+                <div class="flex items-center gap-2 text-gray-600 text-sm">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <span>{{ ppa.address }} — <strong class="text-gray-900">{{ ppa.lga.name }}, {{ ppa.state.name }} State</strong></span>
+                </div>
             </div>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
-                {% if query %}
-                    Results for "<span class="text-emerald-700">{{ query }}</span>"
-                {% else %}
-                    All Places of Primary Assignment
-                {% endif %}
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Showing {{ ppas.paginator.count|default:ppas|length }} location{% if ppas|length != 1 %}s{% endif %}
-                {% if selected_state %} in {{ selected_state.name }}{% endif %}
-                {% if selected_lga %}, {{ selected_lga.name }}{% endif %}
-            </p>
+
+            <!-- Stipend Badge -->
+            <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl text-center shrink-0">
+                <span class="block text-xs text-emerald-600 font-semibold uppercase tracking-wider">Monthly Stipend</span>
+                <span class="text-2xl font-black text-emerald-800">
+                    {% if ppa.stipend %}₦{{ ppa.stipend }}{% else %}N/A{% endif %}
+                </span>
+            </div>
         </div>
 
-        <!-- Refine Search CTA -->
-        <div>
-            <a href="{% url 'search' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium text-sm rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-emerald-600"></i> Modify Search
-            </a>
+        <!-- Description & Contact Info Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-gray-100">
+            <div class="md:col-span-2 space-y-4">
+                <h3 class="text-lg font-bold text-gray-900">About this PPA</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    {{ ppa.description|default:"No detailed description provided for this Place of Primary Assignment yet." }}
+                </p>
+            </div>
+
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-4">
+                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Contact Info</h3>
+                <div class="space-y-3 text-sm text-gray-600">
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="phone" class="w-4 h-4 text-emerald-600"></i>
+                        <span>{{ ppa.phone|default:"Not available" }}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="mail" class="w-4 h-4 text-emerald-600"></i>
+                        <span class="truncate">{{ ppa.email|default:"Not available" }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- PPA Grid -->
-    {% if ppas %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for ppa in ppas %}
-                <div class="animate-card bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-emerald-200 transition-all duration-300 flex flex-col justify-between group"
-                     style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
-                    
-                    <div>
-                        <!-- Category & Status Badges -->
-                        <div class="flex items-center justify-between gap-2 mb-4">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                {{ ppa.category|default:"Organization" }}
-                            </span>
-                            {% if ppa.accepting_corpers %}
-                                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Openings Available
-                                </span>
-                            {% endif %}
-                        </div>
-
-                        <!-- PPA Title -->
-                        <h2 class="text-xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">
-                            {{ ppa.name }}
-                        </h2>
-
-                        <!-- Location Metadata -->
-                        <div class="space-y-2 mb-6">
-                            <div class="flex items-start gap-2 text-sm text-gray-600">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-                                <span class="line-clamp-2">{{ ppa.address }}</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-400 font-medium">
-                                <i data-lucide="globe" class="w-3.5 h-3.5 text-gray-400"></i>
-                                <span>{{ ppa.lga.name }}, {{ ppa.state.name }} State</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer Info & Action -->
-                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
-                        <div class="text-xs text-gray-500">
-                            {% if ppa.stipend %}
-                                <span class="font-semibold text-gray-900">₦{{ ppa.stipend }}</span>/mo stipend
-                            {% else %}
-                                <span class="text-gray-400">Stipend unverified</span>
-                            {% endif %}
-                        </div>
-
-                        <a href="{% url 'ppa_detail' ppa.id %}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 group-hover:text-emerald-800 transition-colors">
-                            Details <i data-lucide="chevron-right" class="w-4 h-4 transition-transform group-hover:translate-x-1"></i>
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
+    <!-- Google Maps & Navigation Section -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Location & Navigation</h3>
+                <p class="text-sm text-gray-500">View exact GPS location and get turn-by-turn directions.</p>
+            </div>
+            
+            {% if ppa.latitude and ppa.longitude %}
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ ppa.latitude }},{{ ppa.longitude }}" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow hover:bg-emerald-700 transition">
+                    <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions
+                </a>
+            {% else %}
+                <a href="https://www.google.com/maps/search/?api=1&query={{ ppa.name|urlencode }},+{{ ppa.address|urlencode }}" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow hover:bg-emerald-700 transition">
+                    <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions
+                </a>
+            {% endif %}
         </div>
 
-        <!-- Pagination Controls -->
-        {% if ppas.has_other_pages %}
-            <div class="mt-12 flex items-center justify-center gap-2">
-                {% if ppas.has_previous %}
-                    <a href="?page={{ ppas.previous_page_number }}&q={{ query }}&state={{ selected_state.id }}&lga={{ selected_lga.id }}" 
-                       class="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </a>
-                {% endif %}
+        {% if ppa.latitude and ppa.longitude %}
+            <div id="map" class="w-full h-96 rounded-2xl shadow-inner border border-gray-100"></div>
+            <script>
+                function initMap() {
+                    const ppaLocation = { lat: {{ ppa.latitude }}, lng: {{ ppa.longitude }} };
+                    const map = new google.maps.Map(document.getElementById("map"), {
+                        zoom: 15,
+                        center: ppaLocation,
+                    });
+                    new google.maps.Marker({
+                        position: ppaLocation,
+                        map: map,
+                        title: "{{ ppa.name|escapejs }}",
+                    });
+                }
+            </script>
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap"></script>
+        {% else %}
+            <div class="bg-gray-50 rounded-2xl p-8 text-center border border-dashed border-gray-200 text-gray-500">
+                <i data-lucide="map-pin-off" class="w-8 h-8 mx-auto mb-2 text-gray-400"><span>GPS coordinates are not yet available for this location. You can still use the directions button above to search via address.</span></i>
+            </div>
+        {% endif %}
+    </div>
 
-                <span class="px-4 py-2 text-sm text-gray-600 font-medium">
-                    Page {{ ppas.number }} of {{ ppas.paginator.num_pages }}
-                </span>
+    <!-- Reviews Section -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Corp Member Reviews ({{ reviews|length }})</h3>
 
-                {% if ppas.has_next %}
-                    <a href="?page={{ ppas.next_page_number }}&q={{ query }}&state={{ selected_state.id }}&lga={{ selected_lga.id }}" 
-                       class="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </a>
-                {% endif %}
+        <!-- Review Submission Form -->
+        {% if user.is_authenticated %}
+            <form method="POST" class="mb-8 bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                {% csrf_token %}
+                <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Leave a Review</h4>
+                
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-medium text-gray-700">Rating (1-5):</label>
+                    <select name="rating" class="border border-gray-200 rounded-xl px-3 py-1.5 bg-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                        <option value="3">⭐⭐⭐ (3/5)</option>
+                        <option value="2">⭐⭐ (2/5)</option>
+                        <option value="1">⭐ (1/5)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <textarea name="comment" rows="3" placeholder="Share your experience working at this PPA..." class="w-full border border-gray-200 rounded-xl p-3 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required></textarea>
+                </div>
+
+                <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl shadow transition">
+                    Post Review
+                </button>
+            </form>
+        {% else %}
+            <div class="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800">
+                Please <a href="{% url 'landing' %}" class="underline font-semibold">sign in</a> to submit a review or rating for this PPA.
             </div>
         {% endif %}
 
-    <!-- Empty State -->
-    {% else %}
-        <div class="bg-white rounded-3xl border border-gray-100 p-12 text-center max-w-2xl mx-auto shadow-sm my-8">
-            <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <i data-lucide="map-pin-off" class="w-10 h-10"></i>
-            </div>
-            
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">No PPAs Found</h3>
-            <p class="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
-                We couldn't find any PPA matching your search criteria. Try adjusting your search query or selecting a different LGA/State filter.
-            </p>
-
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a href="{% url 'search' %}" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all">
-                    Reset Filters
-                </a>
-                <a href="{% url 'dashboard' %}" class="w-full sm:w-auto px-6 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl border border-gray-200 transition-all">
-                    Back to Dashboard
-                </a>
-            </div>
+        <!-- Review List -->
+        <div class="space-y-4">
+            {% for review in reviews %}
+                <div class="p-5 rounded-2xl border border-gray-100 bg-white shadow-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-900 text-sm">{{ review.user.full_name|default:review.user.state_code }}</span>
+                        <span class="text-xs text-amber-500 font-semibold">
+                            {% if review.rating == 5 %}⭐⭐⭐⭐⭐{% elif review.rating == 4 %}⭐⭐⭐⭐{% elif review.rating == 3 %}⭐⭐⭐{% elif review.rating == 2 %}⭐⭐{% else %}⭐{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed">{{ review.comment }}</p>
+                    <span class="text-xs text-gray-400 block">{{ review.created_at|date:"M d, Y" }}</span>
+                </div>
+            {% empty %}
+                <p class="text-sm text-gray-500 italic">No reviews yet. Be the first corp member to review this PPA!</p>
+            {% endfor %}
         </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
