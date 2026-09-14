@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="mb-4">
+        <h1 class="fw-bold">Welcome back, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+        <p class="text-muted">Find your Place of Primary Assignment and view details, coordinates, and reviews.</p>
+    </div>
+
+    <!-- User Profile Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm border-0 bg-light">
+                <small class="text-muted fw-bold">STATE CODE</small>
+                <h5 class="fw-bold text-dark mt-1">{{ request.user.username }}</h5>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm border-0 bg-light">
+                <small class="text-muted fw-bold">STATE POSTED</small>
+                <h5 class="fw-bold text-dark mt-1">{{ request.user.state_posted.name|default:"Not Set" }}</h5>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm border-0 bg-light">
+                <small class="text-muted fw-bold">LGA POSTED</small>
+                <h5 class="fw-bold text-dark mt-1">{{ request.user.lga_posted.name|default:"Not Set" }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- PPA Search Action Card -->
+    <div class="card text-white bg-success p-4 shadow border-0" style="background: linear-gradient(135deg, #0f5132 0%, #198754 100%);">
+        <div class="card-body py-3">
+            <h3 class="card-title fw-bold mb-2">Find Your PPA</h3>
+            <p class="card-text mb-4 text-white-50">Search live databases for organizations, institutions, and offices across your LGA and State.</p>
+            <a href="{% url 'live_search' %}" class="btn btn-light text-success fw-bold px-4 py-2 shadow-sm">
+                Search for PPA &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

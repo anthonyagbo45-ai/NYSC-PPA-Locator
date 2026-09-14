@@ -61,9 +61,17 @@ def portal_entry(request):
 
                 login(request, user)
 
-        return redirect('search_results')
+        return redirect('dashboard')
         
     return redirect('landing')
+
+@login_required
+def dashboard(request):
+    """Render the main user dashboard (Step 1)."""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'ppas/dashboard.html', context)
 
 @login_required
 def search_ppa(request):
@@ -173,7 +181,7 @@ def search_google_places(query, state_name="Nigeria", lga_name=""):
     headers = {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': api_key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location'
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri'
     }
     payload = {'textQuery': search_query}
 
@@ -187,13 +195,19 @@ def search_google_places(query, state_name="Nigeria", lga_name=""):
             display_name = place.get('displayName', {}).get('text', '')
             address = place.get('formattedAddress', '')
             location = place.get('location', {})
+            place_id = place.get('id', '')
+            google_maps_uri = place.get('googleMapsUri', '')
             
+            if not google_maps_uri and place_id:
+                google_maps_uri = f"https://www.google.com/maps/search/?api=1&query=Google&query_place_id={place_id}"
+
             results.append({
                 'name': display_name,
                 'address': address,
                 'latitude': location.get('latitude'),
                 'longitude': location.get('longitude'),
-                'place_id': place.get('id'),
+                'place_id': place_id,
+                'google_maps_url': google_maps_uri,
             })
         return results
     except Exception as e:
@@ -204,7 +218,8 @@ def search_google_places(query, state_name="Nigeria", lga_name=""):
 @login_required
 def save_live_place_view(request):
     """
-    Saves selected Google Places result with State, LGA, and GPS coordinates.
+    Saves selected Google Places result with State, LGA, and GPS coordinates,
+    then transitions directly to Step 3 (PPA Detail View).
     """
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -214,12 +229,27 @@ def save_live_place_view(request):
         place_id = request.POST.get('place_id')
         latitude = request.POST.get('latitude')
         longitude = request.POST.get('longitude')
+        google_maps_url = request.POST.get('google_maps_url')
 
         if not name or not address:
             messages.error(request, "Invalid place data submitted.")
             return redirect('live_search')
 
-        state_obj = State.objects.filter(id=state_id).first() if state_id else State.objects.first()
+        if not google_maps_url:
+            if place_id:
+                google_maps_url = f"https://www.google.com/maps/search/?api=1&query=Google&query_place_id={place_id}"
+            else:
+                google_maps_url = f"https://www.google.com/maps/search/?q={requests.utils.quote(name)}"
+
+        state_obj = None
+        if state_id:
+            if str(state_id).isdigit():
+                state_obj = State.objects.filter(id=int(state_id)).first()
+            else:
+                state_obj = State.objects.filter(name__iexact=state_id).first()
+        if not state_obj:
+            state_obj = State.objects.first()
+
         lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
 
         ppa, created = PPA.objects.get_or_create(
@@ -233,6 +263,8 @@ def save_live_place_view(request):
                 'verified': True,
                 'latitude': float(latitude) if latitude else None,
                 'longitude': float(longitude) if longitude else None,
+                'google_maps_url': google_maps_url,
+                'phone': 'N/A',  
             }
         )
 
@@ -241,7 +273,8 @@ def save_live_place_view(request):
         else:
             messages.info(request, f"'{name}' already exists in your database.")
 
-        return redirect('live_search')
+        # Transition directly to Step 3 (PPA Detail View)
+        return redirect('ppa_detail', pk=ppa.pk)
         
     return redirect('live_search')
 

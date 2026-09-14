@@ -31,6 +31,7 @@ INSTALLED_APPS = [
 
 # Set the Custom User Model
 AUTH_USER_MODEL = 'accounts.CorpMember'
+LOGIN_URL = 'login'
 
 # Ensure CSRF Middleware is active
 MIDDLEWARE = [

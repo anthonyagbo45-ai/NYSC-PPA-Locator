@@ -47,7 +47,7 @@
                         <p class="mb-1 text-muted"><small>{{ place.address }}</small></p>
                     </div>
                     
-                    <!-- One-Click Save Form passing State, LGA, & GPS coordinates -->
+                    <!-- One-Click Save Form passing State, LGA, GPS coordinates, and Google Maps URL -->
                     <form method="POST" action="{% url 'save_live_place' %}">
                         {% csrf_token %}
                         <input type="hidden" name="name" value="{{ place.name }}">
@@ -57,6 +57,7 @@
                         <input type="hidden" name="place_id" value="{{ place.place_id }}">
                         <input type="hidden" name="latitude" value="{{ place.latitude }}">
                         <input type="hidden" name="longitude" value="{{ place.longitude }}">
+                        <input type="hidden" name="google_maps_url" value="{{ place.google_maps_url }}">
                         <button type="submit" class="btn btn-success btn-sm">
                             <i class="bi bi-plus-circle">+ Save as PPA</i>
                         </button>
