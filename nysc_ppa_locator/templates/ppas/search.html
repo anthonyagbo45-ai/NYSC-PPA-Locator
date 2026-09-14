@@ -71,7 +71,8 @@
                     </div>
                 </div>
 
-                <form action="{% url 'search_results' %}" method="GET" class="space-y-6" autocomplete="off">
+                <!-- Updated Form Action to target portal entry -->
+                <form action="{% url 'portal_entry' %}" method="GET" class="space-y-6" autocomplete="off">
                     
                     <!-- Row 1: Full Name & Email -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" id="register-fields-group">
