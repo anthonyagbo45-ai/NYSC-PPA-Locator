@@ -1,43 +1,76 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYSC PPA Locator | Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
 
-{% block content %}
-<div class="container my-5">
-    <div class="mb-4">
-        <h1 class="fw-bold">Welcome back, {{ request.user.first_name|default:request.user.username }} 👋</h1>
-        <p class="text-muted">Find your Place of Primary Assignment and view details, coordinates, and reviews.</p>
-    </div>
+    <!-- Navigation Bar -->
+    <header class="w-full bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-emerald-600 font-bold text-lg flex items-center">
+                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    PPA LOCATOR
+                </span>
+            </div>
+            <nav class="flex items-center space-x-6 text-sm font-medium text-slate-600">
+                <a href="{% url 'dashboard' %}" class="text-emerald-600 font-semibold hover:text-emerald-700 transition">Dashboard</a>
+                <a href="{% url 'search_ppa' %}" class="hover:text-emerald-600 transition">Search PPA</a>
+                <a href="#" class="hover:text-emerald-600 transition">Profile</a>
+                <a href="#" class="hover:text-emerald-600 transition">Logout</a>
+            </nav>
+        </div>
+    </header>
 
-    <!-- User Profile Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm border-0 bg-light">
-                <small class="text-muted fw-bold">STATE CODE</small>
-                <h5 class="fw-bold text-dark mt-1">{{ request.user.username }}</h5>
+    <!-- Main Content -->
+    <main class="max-w-7xl w-full mx-auto px-6 py-8 flex-grow">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-slate-900 mb-1">Welcome back, {{ request.user.first_name|default:"None" }} 👋</h1>
+            <p class="text-sm text-slate-600">Find your Place of Primary Assignment and view details, coordinates, and reviews.</p>
+        </div>
+
+        <!-- User Details Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 space-y-6">
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">State Code</span>
+                <span class="text-slate-900 font-semibold text-base">{{ request.user.state_code|default:"None" }}</span>
+            </div>
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">State Posted</span>
+                <span class="text-slate-900 font-semibold text-base">{% if request.user.state_posted %}{{ request.user.state_posted.name }}{% else %}Federal Capital Territory{% endif %}</span>
+            </div>
+            <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">LGA Posted</span>
+                <span class="text-slate-900 font-semibold text-base">{% if request.user.lga_posted %}{{ request.user.lga_posted.name }}{% else %}Abuja Municipal{% endif %}</span>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm border-0 bg-light">
-                <small class="text-muted fw-bold">STATE POSTED</small>
-                <h5 class="fw-bold text-dark mt-1">{{ request.user.state_posted.name|default:"Not Set" }}</h5>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm border-0 bg-light">
-                <small class="text-muted fw-bold">LGA POSTED</small>
-                <h5 class="fw-bold text-dark mt-1">{{ request.user.lga_posted.name|default:"Not Set" }}</h5>
-            </div>
-        </div>
-    </div>
 
-    <!-- PPA Search Action Card -->
-    <div class="card text-white bg-success p-4 shadow border-0" style="background: linear-gradient(135deg, #0f5132 0%, #198754 100%);">
-        <div class="card-body py-3">
-            <h3 class="card-title fw-bold mb-2">Find Your PPA</h3>
-            <p class="card-text mb-4 text-white-50">Search live databases for organizations, institutions, and offices across your LGA and State.</p>
-            <a href="{% url 'live_search' %}" class="btn btn-light text-success fw-bold px-4 py-2 shadow-sm">
-                Search for PPA &rarr;
+        <!-- Find Your PPA Action Banner -->
+        <div class="bg-emerald-700 rounded-2xl p-8 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h2 class="text-xl font-bold mb-2">Find Your PPA</h2>
+                <p class="text-emerald-100 text-sm max-w-xl">Search live databases for organizations, institutions, and offices across your LGA and State.</p>
+            </div>
+            <a href="{% url 'live_search' %}" class="inline-flex items-center space-x-2 bg-white text-emerald-800 hover:bg-emerald-50 px-5 py-3 rounded-xl font-semibold text-sm transition shadow-sm">
+                <span>Search for PPA</span>
+                <span>→</span>
             </a>
         </div>
-    </div>
-</div>
-{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-6 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
+        &copy; 2026 NYSC PPA Locator. Built for Nigerian Corps Members.
+    </footer>
+
+</body>
+</html>

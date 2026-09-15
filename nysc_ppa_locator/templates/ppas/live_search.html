@@ -1,119 +1,142 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYSC PPA Locator | Live Search</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
 
-{% block content %}
-<div class="container py-4">
-    <h2>Search Any PPA in Nigeria</h2>
-    <p class="text-muted">Type any school, government agency, bank, or organization and narrow it down by State & LGA.</p>
-
-    <!-- Django Messages Alert Banner -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Navigation Bar -->
+    <header class="w-full bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-emerald-600 font-bold text-lg flex items-center">
+                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    PPA LOCATOR
+                </span>
             </div>
-        {% endfor %}
-    {% endif %}
+            <nav class="flex items-center space-x-6 text-sm font-medium text-slate-600">
+                <a href="{% url 'dashboard' %}" class="hover:text-emerald-600 transition">Dashboard</a>
+                <a href="{% url 'search_ppa' %}" class="hover:text-emerald-600 transition">Search PPA</a>
+                <a href="#" class="hover:text-emerald-600 transition">Profile</a>
+                <a href="#" class="hover:text-emerald-600 transition">Logout</a>
+            </nav>
+        </div>
+    </header>
 
-    <!-- Search Form with State & LGA Selectors -->
-    <form method="GET" action="" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="e.g. First Bank or General Hospital">
-        </div>
-        <div class="col-md-3">
-            <select name="state" id="state-select" class="form-select">
-                <option value="">Select State...</option>
-                {% for s in states %}
-                    <option value="{{ s.id }}" {% if selected_state == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="lga" id="lga-select" class="form-select">
-                <option value="">Select LGA (Optional)...</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Search</button>
-        </div>
-    </form>
+    <!-- Main Content -->
+    <main class="max-w-3xl w-full mx-auto px-6 py-12 flex-grow">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+            <h1 class="text-xl font-bold text-slate-900 mb-2">Search Any PPA in Nigeria</h1>
+            <p class="text-sm text-slate-600 mb-6">Type any school, government agency, bank, or organization and narrow it down by State & LGA.</p>
 
-    {% if places %}
-        <div class="list-group">
-            {% for place in places %}
-                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                    <div>
-                        <h5 class="mb-1 text-dark"><strong>{{ place.name }}</strong></h5>
-                        <p class="mb-1 text-muted"><small>{{ place.address }}</small></p>
-                    </div>
-                    
-                    <!-- One-Click Save Form passing State, LGA, GPS coordinates, and Google Maps URL -->
-                    <form method="POST" action="{% url 'save_live_place' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="name" value="{{ place.name }}">
-                        <input type="hidden" name="address" value="{{ place.address }}">
-                        <input type="hidden" name="state" value="{{ selected_state }}">
-                        <input type="hidden" name="lga" value="{{ selected_lga }}">
-                        <input type="hidden" name="place_id" value="{{ place.place_id }}">
-                        <input type="hidden" name="latitude" value="{{ place.latitude }}">
-                        <input type="hidden" name="longitude" value="{{ place.longitude }}">
-                        <input type="hidden" name="google_maps_url" value="{{ place.google_maps_url }}">
-                        <button type="submit" class="btn btn-success btn-sm">
-                            <i class="bi bi-plus-circle">+ Save as PPA</i>
-                        </button>
-                    </form>
+            <form method="GET" action="" class="space-y-5">
+                <!-- Search Query Input -->
+                <div>
+                    <input type="text" name="q" value="{{ query }}" placeholder="e.g. First Bank or General H..." 
+                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
                 </div>
-            {% endfor %}
+
+                <!-- State Dropdown -->
+                <div>
+                    <select name="state" id="state-select" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        <option value="">Select State</option>
+                        {% for state in states %}
+                            <option value="{{ state.id }}" {% if selected_state == state.id|stringformat:"s" %}selected{% endif %}>{{ state.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- LGA Dropdown -->
+                <div>
+                    <select name="lga" id="lga-select" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-sm">
+                        <option value="">Select LGA (Optional)...</option>
+                        {% if selected_lga %}
+                            <option value="{{ selected_lga }}" selected>LGA Selected</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <!-- Search Button -->
+                <div>
+                    <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition text-sm">
+                        Search
+                    </button>
+                </div>
+            </form>
+
+            <!-- Results Section if available -->
+            {% if places %}
+                <div class="mt-8 space-y-4">
+                    <h2 class="text-lg font-bold text-slate-900">Search Results</h2>
+                    <div class="divide-y divide-slate-100">
+                        {% for place in places %}
+                            <div class="py-4 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">{{ place.name }}</h3>
+                                    <p class="text-xs text-slate-500">{{ place.address }}</p>
+                                </div>
+                                <form method="POST" action="{% url 'save_live_place' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="name" value="{{ place.name }}">
+                                    <input type="hidden" name="address" value="{{ place.address }}">
+                                    <input type="hidden" name="state" value="{{ selected_state }}">
+                                    <input type="hidden" name="lga" value="{{ selected_lga }}">
+                                    <input type="hidden" name="place_id" value="{{ place.place_id }}">
+                                    <input type="hidden" name="latitude" value="{{ place.latitude }}">
+                                    <input type="hidden" name="longitude" value="{{ place.longitude }}">
+                                    <input type="hidden" name="google_maps_url" value="{{ place.google_maps_url }}">
+                                    <button type="submit" class="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">
+                                        Select & Save
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
         </div>
-    {% elif query %}
-        <div class="alert alert-warning">No matching institutions found on Google Places for "{{ query }}". Try refining your search terms or selecting a broader location.</div>
-    {% endif %}
-</div>
+    </main>
 
-<!-- Dynamic LGA Fetch JavaScript -->
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var stateSelect = document.getElementById('state-select');
-        var lgaSelect = document.getElementById('lga-select');
-        var preselectedLga = "{{ selected_lga }}";
+    <!-- Footer -->
+    <footer class="w-full py-6 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
+        &copy; 2026 NYSC PPA Locator. Built for Nigerian Corps Members.
+    </footer>
 
-        function loadLgas(stateId, selectedLgaId = "") {
-            if (!stateId) {
-                lgaSelect.innerHTML = '<option value="">Select LGA (Optional)...</option>';
-                return;
-            }
+    <!-- JavaScript for Dynamic LGA Loading -->
+    <script>
+        const stateSelect = document.getElementById('state-select');
+        const lgaSelect = document.getElementById('lga-select');
 
-            lgaSelect.innerHTML = '<option value="">Loading LGAs...</option>';
+        stateSelect.addEventListener('change', function() {
+            const stateId = this.value;
+            lgaSelect.innerHTML = '<option value="">Select LGA (Optional)...</option>';
+            if (!stateId) return;
 
-            fetch(`{% url 'load_lgas' %}?state=${stateId}`)
+            fetch(`/api/load-lgas/?state=${stateId}`)
                 .then(response => response.json())
                 .then(data => {
-                    lgaSelect.innerHTML = '<option value="">Select LGA (Optional)...</option>';
                     data.forEach(lga => {
-                        var option = document.createElement('option');
+                        const option = document.createElement('option');
                         option.value = lga.id;
                         option.textContent = lga.name;
-                        if (selectedLgaId && lga.id == selectedLgaId) {
+                        {% if selected_lga %}
+                        if (lga.id == "{{ selected_lga }}") {
                             option.selected = true;
                         }
+                        {% endif %}
                         lgaSelect.appendChild(option);
                     });
                 })
-                .catch(error => {
-                    console.error('Error loading LGAs:', error);
-                    lgaSelect.innerHTML = '<option value="">Failed to load LGAs</option>';
-                });
-        }
-
-        // If a state is already selected on page load, populate its LGAs
-        if (stateSelect.value) {
-            loadLgas(stateSelect.value, preselectedLga);
-        }
-
-        // Listen for changes on the state dropdown
-        stateSelect.addEventListener('change', function () {
-            loadLgas(this.value);
+                .catch(err => console.error('Error loading LGAs:', err));
         });
-    });
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
