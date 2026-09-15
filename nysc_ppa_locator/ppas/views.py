@@ -306,10 +306,19 @@ def dynamic_place_search_view(request):
     if query:
         places = search_google_places(query, state_name=state_name, lga_name=lga_name)
 
+    # Retrieve saved PPAs from database matching the logged-in user's registered State and LGA
+    saved_ppas = []
+    if request.user.is_authenticated:
+        user_state = getattr(request.user, 'state_posted', None)
+        user_lga = getattr(request.user, 'lga_posted', None)
+        if user_state and user_lga:
+            saved_ppas = PPA.objects.filter(state=user_state, lga=user_lga).select_related('state', 'lga')
+
     context = {
         'query': query,
         'states': states,
         'places': places,
+        'saved_ppas': saved_ppas,
         'selected_state': state_id,
         'selected_lga': lga_id,
     }
