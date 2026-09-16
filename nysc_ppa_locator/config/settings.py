@@ -8,11 +8,12 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security Settings
-SECRET_KEY = os.getenv('SECRET_KEY', 'your-fallback-in-development')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', os.getenv('SECRET_KEY', 'your-fallback-in-development'))
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 
-ALLOWED_HOSTS = ['*']
+# Allowed hosts configured via environment variable (defaults to '*' for testing, comma-separated for production)
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 # Add your custom apps
 INSTALLED_APPS = [
