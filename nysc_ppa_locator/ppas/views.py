@@ -241,23 +241,31 @@ def save_live_place_view(request):
             else:
                 google_maps_url = f"https://www.google.com/maps/search/?q={requests.utils.quote(name)}"
 
+        # Resolve State with fallback to user's registered state
         state_obj = None
         if state_id:
             if str(state_id).isdigit():
                 state_obj = State.objects.filter(id=int(state_id)).first()
             else:
                 state_obj = State.objects.filter(name__iexact=state_id).first()
+        if not state_obj and hasattr(request.user, 'state_posted'):
+            state_obj = request.user.state_posted
         if not state_obj:
             state_obj = State.objects.first()
 
+        # Resolve LGA with fallback to user's registered LGA or state default to satisfy NOT NULL constraint
         lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
+        if not lga_obj and hasattr(request.user, 'lga_posted'):
+            lga_obj = request.user.lga_posted
+        if not lga_obj and state_obj:
+            lga_obj = LGA.objects.filter(state=state_obj).first()
 
         ppa, created = PPA.objects.get_or_create(
             name=name,
+            state=state_obj,
+            lga=lga_obj,
             defaults={
                 'address': address,
-                'state': state_obj,
-                'lga': lga_obj,
                 'category': 'Public Sector / Organization',
                 'description': f'Discovered via Google Places Live Search (Place ID: {place_id})',
                 'verified': True,
@@ -306,7 +314,7 @@ def dynamic_place_search_view(request):
     if query:
         places = search_google_places(query, state_name=state_name, lga_name=lga_name)
 
-    # Retrieve saved PPAs from database matching the logged-in user's registered State and LGA
+    # Retrieve saved PPAs from shared database matching the logged-in user's registered State and LGA strictly
     saved_ppas = []
     if request.user.is_authenticated:
         user_state = getattr(request.user, 'state_posted', None)
