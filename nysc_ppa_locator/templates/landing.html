@@ -1,81 +1,75 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<section class="min-h-[80vh] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
-    <!-- Subtle background effect -->
-    <div class="absolute inset-0 z-[-1] bg-gradient-to-b from-emerald-50 to-gray-50"></div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
     
-    <span class="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold mb-6 shadow-sm border border-emerald-200">
-        NYSC PPA LOCATOR
-    </span>
-    
-    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 h-[100px] flex items-center justify-center">
-        <span>Find your PPA in&nbsp;</span>
-        <span id="typewriter" class="text-emerald-600"></span>
-        <span class="animate-pulse border-r-4 border-emerald-600 h-10 md:h-14 ml-1"></span>
-    </h1>
-    
-    <p class="text-lg text-gray-600 mb-10 max-w-2xl">
-        A premium, modern directory for Nigerian corps members to discover, evaluate, and navigate to their Places of Primary Assignment with ease.
-    </p>
-    
-    <div class="flex flex-col sm:flex-row gap-4">
-        <a href="{% url 'search' %}" class="bg-emerald-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-emerald-700 transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2">
-            Search for PPA <i data-lucide="arrow-right" class="w-5 h-5"></i>
-        </a>
-        <a href="#how-it-works" class="bg-white text-gray-700 px-8 py-4 rounded-xl font-medium border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition shadow-sm flex items-center justify-center">
-            How It Works
-        </a>
-    </div>
-</section>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const words = ["Lagos", "Osun", "Abuja", "Oyo"];
-        let i = 0;
-        let timer;
-        const speed = 100; // typing speed
-        const deleteSpeed = 50;
-        const pauseTime = 2000;
-        const el = document.getElementById('typewriter');
+    <!-- Hero Header Section -->
+    <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold mb-6 border border-emerald-100 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            SMART PPA MATCHING & VERIFIED DATABASE
+        </div>
         
-        // Respect prefers-reduced-motion
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (prefersReducedMotion) {
-            el.innerHTML = "Nigeria";
-            document.querySelector('.animate-pulse').style.display = 'none';
-            return;
-        }
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
+            Find your PPA in <span class="text-emerald-700">Enugu</span>
+        </h1>
+        
+        <p class="text-base sm:text-lg text-gray-600 mb-2">
+            Your PPA is waiting. Let's show you the way.
+        </p>
+        <p class="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed">
+            Register now and get the exact location, directions, and essential information about your PPA.
+        </p>
+    </div>
 
-        function typingEffect() {
-            let word = words[i].split("");
-            let loopTyping = function() {
-                if (word.length > 0) {
-                    el.innerHTML += word.shift();
-                } else {
-                    setTimeout(deletingEffect, pauseTime);
-                    return;
-                }
-                timer = setTimeout(loopTyping, speed);
-            };
-            loopTyping();
-        }
+    <!-- Registration Form Card Container -->
+    <div class="bg-white p-6 sm:p-8 md:p-10 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto w-full">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 pb-4 border-b border-gray-100">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Corps Member Registration</h3>
+                <p class="text-gray-500 text-sm mt-1">Enter your deployment details to set up your portal.</p>
+            </div>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mt-2 sm:mt-0 self-start sm:self-center">
+                New Account
+            </span>
+        </div>
 
-        function deletingEffect() {
-            let word = words[i].split("");
-            let loopDeleting = function() {
-                if (word.length > 0) {
-                    word.pop();
-                    el.innerHTML = word.join("");
-                } else {
-                    i = (i + 1) % words.length;
-                    setTimeout(typingEffect, speed);
-                    return;
-                }
-                timer = setTimeout(loopDeleting, deleteSpeed);
-            };
-            loopDeleting();
-        }
-        typingEffect();
-    });
-</script>
+        <!-- Responsive Form Grid: 1 column on mobile, 2 columns on medium/desktop screens -->
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% csrf_token %}
+            
+            <!-- Full Name -->
+            <div class="flex flex-col">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Full Name</label>
+                {{ form.full_name }}
+            </div>
+
+            <!-- Email Address -->
+            <div class="flex flex-col">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Email Address</label>
+                {{ form.email }}
+            </div>
+
+            <!-- State Code -->
+            <div class="flex flex-col">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">State Code</label>
+                {{ form.state_code }}
+            </div>
+
+            <!-- Password -->
+            <div class="flex flex-col">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Password</label>
+                {{ form.password }}
+            </div>
+
+            <!-- Submit Button (Spans across both columns on desktop) -->
+            <div class="md:col-span-2 pt-2">
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-emerald-700 transition shadow-md text-center">
+                    Register Account
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
 {% endblock %}
