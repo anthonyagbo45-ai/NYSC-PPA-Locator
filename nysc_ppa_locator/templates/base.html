@@ -18,25 +18,59 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased flex flex-col min-h-screen">
-    <nav class="bg-white border-b border-gray-100 shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="font-bold text-xl tracking-tight text-emerald-700 flex items-center gap-2">
-            <i data-lucide="map-pin"></i> PPA LOCATOR
+    <nav class="bg-white border-b border-gray-100 shadow-sm px-6 py-4 sticky top-0 z-50">
+        <div class="flex justify-between items-center">
+            <div class="font-bold text-xl tracking-tight text-emerald-700 flex items-center gap-2">
+                <i data-lucide="map-pin"></i> PPA LOCATOR
+            </div>
+            
+            <!-- Desktop Navigation Links -->
+            <div class="hidden md:flex space-x-6 items-center">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-emerald-600 transition">Dashboard</a>
+                    <a href="{% url 'search_ppa' %}" class="text-gray-600 hover:text-emerald-600 transition">Search PPA</a>
+                    <a href="{% url 'profile' %}" class="text-gray-600 hover:text-emerald-600 transition">Profile</a>
+                    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="text-gray-600 hover:text-red-600 transition">Logout</button></form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-600 hover:text-emerald-600 transition">Login</a>
+                    <a href="{% url 'register' %}" class="bg-emerald-600 text-white px-5 py-2 rounded-full hover:bg-emerald-700 transition shadow-md">Get Started</a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Menu Hamburger Button -->
+            <button id="mobile-menu-button" class="md:hidden text-gray-600 focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
         </div>
-        <div class="hidden md:flex space-x-6 items-center">
+
+        <!-- Mobile Dropdown Menu (Hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden mt-4 pt-4 border-t border-gray-100 flex flex-col space-y-3">
             {% if user.is_authenticated %}
-                <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-emerald-600 transition">Dashboard</a>
-                <a href="{% url 'search_ppa' %}" class="text-gray-600 hover:text-emerald-600 transition">Search PPA</a>
-                <a href="{% url 'profile' %}" class="text-gray-600 hover:text-emerald-600 transition">Profile</a>
-                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="text-gray-600 hover:text-red-600 transition">Logout</button></form>
+                <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-emerald-600 transition py-1">Dashboard</a>
+                <a href="{% url 'search_ppa' %}" class="text-gray-600 hover:text-emerald-600 transition py-1">Search PPA</a>
+                <a href="{% url 'profile' %}" class="text-gray-600 hover:text-emerald-600 transition py-1">Profile</a>
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="text-gray-600 hover:text-red-600 transition py-1 text-left w-full">Logout</button></form>
             {% else %}
-                <a href="{% url 'login' %}" class="text-gray-600 hover:text-emerald-600 transition">Login</a>
-                <a href="{% url 'register' %}" class="bg-emerald-600 text-white px-5 py-2 rounded-full hover:bg-emerald-700 transition shadow-md">Get Started</a>
+                <a href="{% url 'login' %}" class="text-gray-600 hover:text-emerald-600 transition py-1">Login</a>
+                <a href="{% url 'register' %}" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-md text-center">Get Started</a>
             {% endif %}
         </div>
     </nav>
+
     <main class="flex-grow">
         {% block content %}{% endblock %}
     </main>
-    <script>lucide.createIcons();</script>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
 </body>
 </html>
