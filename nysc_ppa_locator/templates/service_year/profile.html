@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Service preferences | PPA Locator{% endblock %}
+{% block content %}
+<section class="card section max-w-3xl"><p><a href="{% url 'service_year_dashboard' %}">← My Service Year</a></p><p class="eyebrow">Private and voluntary</p><h1>Service preferences</h1><p>Keep your own service context here. You can use PPA Locator without providing a batch or service stage. These details are not shown on public reviews or PPA profiles.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Save preferences</button></form><p class="muted">Changing your service stage does not verify your service status or give an official role. Your existing account and PPA records stay with you after POP.</p><p><a href="{% url 'profile' %}">Change your state, LGA or account details</a></p></section>
+{% endblock %}

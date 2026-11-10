@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% load tz %}
+{% block title %}Delete my event | PPA Locator{% endblock %}
+{% block content %}<section class="card section"><h1>Delete this private event?</h1><h2>{{ event.title }}</h2><p>{% localtime off %}{{ event.starts_at|date:'j M Y, H:i' }}{% endlocaltime %} · {{ event.timezone_name }}</p><p>This removes this event and its reminders from your own account. It does not change any public notice or NYSC record.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Delete my event</button><a href="{% url 'notifications:home' %}">Keep this event</a></form></section>{% endblock %}

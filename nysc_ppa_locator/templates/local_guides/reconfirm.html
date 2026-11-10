@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Reconfirm local information · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Keep community information useful</p><h1>Reconfirm {{ listing.title }}</h1>
+    <p>Only continue after checking the details again. This records a new contributor check and returns the information for moderation. An old independent verification badge is not carried forward.</p>
+    {% if listing.kind == 'housing' %}<p class="notice">Check permission to share and current availability. The next housing availability check is due 14 days after the date you report. No address, contact or payment details are needed.</p>{% endif %}
+    <form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include 'local_guides/_form_field.html' %}{% endfor %}<button type="submit">Reconfirm and submit for review</button></form>
+    <p><a href="{% url 'local_guides:mine' %}">Back to my contributions</a></p>
+</section>
+{% endblock %}

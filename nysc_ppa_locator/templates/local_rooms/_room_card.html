@@ -1,0 +1,11 @@
+<article class="card result-card">
+    <div class="badges"><span class="badge">{{ room.visibility_label }}</span><span class="badge">{{ room.status_label }}</span></div>
+    <h3><a href="{% url 'local_rooms:room_detail' room.id %}">{{ room.title }}</a></h3>
+    <p class="place-area">{{ room.lga_name }}, {{ room.state_name }}</p>
+    <p>{{ room.description|truncatechars:240 }}</p>
+    {% if room.ppa_name %}<p class="muted">PPA context: {{ room.ppa_name }}</p>{% endif %}
+    {% if room.group_title %}<p class="muted">CDS context: {{ room.group_title }}</p>{% elif room.group_unavailable %}<p class="muted">Linked CDS resource unavailable.</p>{% endif %}
+    {% if room.my_membership %}<p>Your membership: {{ room.my_membership.status_label }}</p>{% endif %}
+    {% if room.visibility == 'members' %}<p class="field-hint">Discussion text requires explicit moderator approval.</p>{% endif %}
+    <a class="button secondary result-action" href="{% url 'local_rooms:room_detail' room.id %}">View room</a>
+</article>

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Share PPA information · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">Community knowledge</p>
+    <h1>{% if editing %}Edit your contribution{% else %}Help the next corps member{% endif %}</h1>
+    <p><a href="{% url 'ppa_detail' ppa.pk %}">{{ ppa.name }}</a> · {{ ppa.lga.name }}, {{ ppa.state.name }}</p>
+    <p>Share what you experienced, and when. Contributions are private until a moderator approves publication. Publication is separate from independently checking the information.</p>
+    <p class="notice">Leave out private names, phone numbers, state codes, posting letters and live locations. Acceptance, accommodation and financial support can change; do not describe them as guaranteed.</p>
+    {% if editing %}<p>Editing a published contribution removes it from the public profile until it is reviewed again.</p>{% endif %}
+    <form method="post" class="card stack">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form.visible_fields %}
+        <div>
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<p class="field-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        {{ form.action.errors }}
+        <div class="actions">
+            <button type="submit" name="action" value="submit">Submit for review</button>
+            <button type="submit" name="action" value="draft" class="secondary">Save private draft</button>
+        </div>
+    </form>
+    <p><a href="{% url 'ppa_profiles:my_claims' %}">My contributions</a> · <a href="{% url 'ppa_detail' ppa.pk %}">Back to PPA</a></p>
+</section>
+{% endblock %}

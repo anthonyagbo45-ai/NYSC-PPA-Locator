@@ -8,3 +8,9 @@ python-dotenv==1.2.3
 requests==2.34.2
 sqlparse==0.6.0
 urllib3==2.7.0
+psycopg[binary]==3.2.13
+redis==6.4.0
+
+django-otp==1.6.3
+
+whitenoise==6.12.0

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Local discussion rooms · PPA Locator{% endblock %}
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Free community discussions</p><h1>Find a local room</h1>
+    <p>Discuss local life and PPA experiences with the community. Public discussions are free to read. Member-only discussions require a moderator to approve each person.</p>
+    <p class="notice">A room is community context, not official NYSC membership, approval, attendance or clearance. Your state, assigned PPA and private CDS preference never grant access automatically.</p>
+    {% include 'local_rooms/_links.html' %}
+</section>
+<section class="section card" aria-label="Filter local rooms">
+    <form method="get" class="stack">
+        {{ form.non_field_errors }}
+        <div class="cards">{% for field in form %}{% include 'local_rooms/_field.html' %}{% endfor %}</div>
+        <p id="location-feedback" class="field-hint" aria-live="polite">Choose a state and LGA, then apply filters to load PPA and current CDS group choices.</p>
+        <div class="actions"><button type="submit">Find rooms</button><a href="{% url 'local_rooms:home' %}">Clear filters</a></div>
+    </form>
+</section>
+<section class="section">
+    <div class="section-heading"><h2>Discover discussions</h2><span class="result-count">{{ page_obj.paginator.count }} rooms</span></div>
+    <p class="muted">Paused rooms accept no new posts or join requests. Archived rooms are excluded.</p>
+    <div class="cards">{% for room in rooms %}{% include 'local_rooms/_room_card.html' %}{% empty %}<p class="empty-state">No rooms match these filters. Try another area or fewer filters.</p>{% endfor %}</div>
+    {% include 'pagination.html' %}
+</section>
+{% endblock %}

@@ -1,139 +1,36 @@
-{% extends 'base.html' %}
-
+{% extends 'base.html' %}{% load static %}{% block title %}{{ ppa.name }} | PPA Locator{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'locator/navigation.css' %}">{% endblock %}
+{% block extra_scripts %}<script defer src="{% static 'locator/navigation.js' %}"></script>{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Back Button & Status Messages -->
-    <div class="mb-6 flex items-center justify-between">
-        <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
-        </a>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-            PPA Details
-        </span>
-    </div>
-
-    {% if messages %}
-        <div class="mb-6 space-y-2">
-            {% for message in messages %}
-                <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- Main PPA Card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-        <div class="p-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                    <span class="text-xs font-bold tracking-wider text-emerald-600 uppercase bg-emerald-50 px-3 py-1 rounded-full">
-                        {{ ppa.category|default:"Organization / PPA" }}
-                    </span>
-                    <h1 class="text-3xl font-extrabold text-gray-900 mt-2">{{ ppa.name }}</h1>
-                </div>
-                {% if ppa.latitude and ppa.longitude %}
-                <a href="https://www.google.com/maps/search/?api=1&query={{ ppa.latitude }},{{ ppa.longitude }}" target="_blank" class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow transition gap-2">
-                    <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions
-                </a>
-                {% endif %}
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
-                <div class="flex items-start space-x-3">
-                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
-                        <i data-lucide="map-pin" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">Address / Location</p>
-                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.address|default:"Address not specified" }}</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start space-x-3">
-                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
-                        <i data-lucide="building" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">LGA & State</p>
-                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.lga|default:"N/A" }}, {{ ppa.state|default:"N/A" }}</p>
-                    </div>
-                </div>
-
-                {% if ppa.contact_phone or ppa.phone %}
-                <div class="flex items-start space-x-3">
-                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
-                        <i data-lucide="phone" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">Contact Phone</p>
-                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.contact_phone|default:ppa.phone }}</p>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if ppa.email %}
-                <div class="flex items-start space-x-3">
-                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 mt-0.5">
-                        <i data-lucide="mail" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">Email Address</p>
-                        <p class="text-gray-800 font-medium mt-0.5">{{ ppa.email }}</p>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            {% if ppa.description %}
-            <div class="mt-8 pt-6 border-t border-gray-100">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">About this PPA</h3>
-                <p class="text-gray-600 leading-relaxed">{{ ppa.description }}</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Reviews Section / Corps Member Notes -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <i data-lucide="message-square" class="w-5 h-5 text-emerald-600"></i> Corps Member Reviews & Notes
-            </h3>
-        </div>
-
-        {% if reviews %}
-            <div class="space-y-4 mb-8">
-                {% for review in reviews %}
-                    <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-800 text-sm">{{ review.user.get_full_name|default:review.user.username }}</span>
-                            <span class="text-xs text-gray-400">{{ review.created_at|date:"M d, Y" }}</span>
-                        </div>
-                        <p class="text-gray-600 text-sm">{{ review.comment|default:review.content }}</p>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-500 text-sm mb-6">No reviews or notes yet for this PPA. Be the first corps member to share your experience!</p>
-        {% endif %}
-
-        <!-- Add Review Form -->
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            <div>
-                <label for="comment" class="block text-sm font-semibold text-gray-700 mb-1">Add your review or notes</label>
-                <textarea name="comment" id="comment" rows="3" class="w-full rounded-xl border border-gray-200 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="Share tips about accommodation, allowance, workload, etc."></textarea>
-            </div>
-            <button type="submit" class="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl text-sm transition">
-                Submit Review
-            </button>
-        </form>
-    </div>
-</div>
-<script>
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-</script>
-{% endblock %}
+<p><a href="{% url 'search_ppa' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}">← Back to this LGA</a></p>
+<p><a href="{% url 'local_guides:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Housing, transport and services around this PPA</a></p>
+<p><a href="{% url 'community:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Questions about this PPA</a> · <a href="{% url 'local_rooms:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Local discussion rooms</a></p>
+<div class="place-layout"><article class="card section place-information"><div class="badges"><span class="badge {{ ppa.status }}">{{ ppa.get_status_display }}</span><span class="badge">{{ ppa.get_source_display }}</span></div>
+<h1>{{ ppa.name }}</h1><p>{{ ppa.address }}</p><p><strong>{{ ppa.lga.name }}, {{ ppa.state.name }}</strong></p><button type="button" class="mobile-directions-trigger" data-open-directions aria-haspopup="dialog" aria-controls="route-dialog">Get directions</button>
+<p class="muted">{{ confirmation_total }} member confirmation{{ confirmation_total|pluralize }}{% if ppa.last_confirmed_at %} · Last confirmed {{ ppa.last_confirmed_at|date:'j M Y' }}{% endif %}</p>
+{% if ppa.status == 'disputed' or ppa.status == 'closed' %}<p class="notice warning">This location is marked {{ ppa.get_status_display|lower }}. Check the report status before travelling.</p>{% endif %}
+{% if ppa.location_status != 'address_checked' %}<p class="notice">The location assignment needs confirmation. Check the organisation and branch, not just its name.</p>{% endif %}
+{% if ppa.source == 'legacy' %}<p class="notice">This older entry still needs its information source reviewed.</p>{% endif %}
+{% include 'ppas/submission_provenance.html' %}
+{% if ppa.landmark %}<h2>Nearby landmark</h2><p>{{ ppa.landmark }}</p>{% endif %}
+{% if ppa.entrance_instructions %}<h2>Finding the entrance</h2><p>{{ ppa.entrance_instructions|linebreaksbr }}</p>{% endif %}
+<div class="actions"><button type="button" class="secondary" data-copy="{{ ppa.name }} — {{ ppa.address }}, {{ ppa.lga.name }}, {{ ppa.state.name }}">Copy address</button><button type="button" class="secondary" data-share>Share place</button>
+{% if ppa.source == 'community' %}<button type="button" class="secondary" data-offline-save data-id="{{ ppa.pk }}" data-name="{{ ppa.name }}" data-address="{{ ppa.address }}" data-area="{{ ppa.lga.name }}, {{ ppa.state.name }}" data-landmark="{{ ppa.landmark }}" data-entrance="{{ ppa.entrance_instructions }}" data-directions="{{ directions_url }}">Save address offline</button>{% endif %}</div>
+<p id="action-feedback" class="muted" role="status"></p>
+<section class="notice"><h2>Your personal PPA tracker</h2><p>Save this as your assigned PPA to track your own reporting progress. It does not establish an official NYSC decision.</p>
+{% if user.is_authenticated %}{% if is_current_ppa %}<a class="button secondary" href="{% url 'service_year_dashboard' %}">My current PPA — open tracker</a>{% else %}<a class="button" href="{% url 'assign_ppa' ppa.pk %}">Save as my PPA</a>{% endif %}{% else %}{% url 'assign_ppa' ppa.pk as assignment_url %}<a class="button secondary" href="{% url 'login' %}?next={{ assignment_url|urlencode }}">Sign in to save my PPA</a>{% endif %}</section>
+{% if user.is_authenticated %}<form method="post" action="{% url 'bookmark_ppa' ppa.pk %}">{% csrf_token %}<input type="hidden" name="action" value="{% if bookmark_saved %}remove{% else %}save{% endif %}"><button class="secondary">{% if bookmark_saved %}Remove bookmark{% else %}Bookmark this place{% endif %}</button></form>{% endif %}
+</article>
+<aside class="card section destination-action"><p class="eyebrow">Your next step</p><h2>Ready to find this PPA?</h2><p>See a route from your current location or enter a starting point.</p>{% include 'ppas/navigation_panel.html' %}<p class="muted">No account needed. Your starting point is not saved.</p></aside></div>
+<section class="card section"><h2>Help the next corps member</h2><p>A community confirmation means a member reports having been here; it is not NYSC or organisation endorsement.</p>
+{% if user.is_authenticated and user.email_verified %}<form method="post" action="{% url 'confirm_ppa' ppa.pk %}" class="stack">{% csrf_token %}<label class="checkbox"><input type="checkbox" name="reported_here" required>I have personally reported at this PPA and checked this location.</label><label>Useful note <span class="muted">(optional; no personal contact details)</span><input name="note" maxlength="500"></label><button type="submit">Confirm this PPA</button></form>
+{% elif user.is_authenticated %}<p><a href="{% url 'profile' %}">Verify your email</a> before confirming a place.</p>{% else %}<p><a href="{% url 'login' %}">Sign in</a> to confirm or report a place.</p>{% endif %}
+<p><a href="{% url 'report_ppa' ppa.pk %}">Report wrong location, closure, duplicate or scam</a></p></section>
+<section class="card section" aria-labelledby="experience-heading"><h2 id="experience-heading">Life at this PPA</h2><p class="muted">Community experience and organisation-reported details are labelled by source and freshness. Approval to publish is separate from independent checking.</p>
+{% for claim in profile_claims %}<article class="review"><h3>{{ claim.topic_label }}</h3><div class="badges"><span class="badge">{{ claim.source_label }}</span><span class="badge">{{ claim.verification_label }}</span></div><p>{{ claim.content|linebreaksbr }}</p><p class="muted">Observed {{ claim.observed_on|date:'j M Y' }} · {{ claim.freshness_label }}{% if claim.checked_at %} · Checked {{ claim.checked_at|date:'j M Y' }}{% endif %}{% if claim.expires_at %} · Reconfirmation due {{ claim.expires_at|date:'j M Y' }}{% endif %}</p>{% if claim.is_stale %}<p class="notice warning">This report needs reconfirmation. Check current details before relying on it.</p>{% endif %}{% if claim.source_url %}<p><a href="{{ claim.source_url }}" target="_blank" rel="noopener noreferrer">Supporting source</a></p>{% endif %}{% if claim.disclaimer %}<p class="notice">{{ claim.disclaimer }}</p>{% endif %}</article>{% empty %}<p>No reviewed context has been shared yet. You can contribute information about duties, accessibility, working hours, accommodation or reported support.</p>{% endfor %}
+{% if user.is_authenticated %}<div class="actions"><a class="button secondary" href="{% url 'ppa_profiles:submit_claim' ppa.pk %}">Contribute PPA information</a><a href="{% url 'ppa_profiles:my_claims' %}">My contributions</a></div>{% else %}<p>Sign in with a verified email to contribute. Personal assignments and public confirmations remain separate.</p>{% endif %}</section>
+<section class="card section"><h2>Community reviews</h2>
+{% for review in reviews %}<article class="review"><p><strong>{{ review.user.public_name }}</strong> · {{ review.rating }}/5 <span class="muted">{{ review.created_at|date:'j M Y' }}</span></p><p>{{ review.comment }}</p>{% if review.context_date %}<p class="muted">Experience date: {{ review.context_date|date:'j M Y' }}</p>{% endif %}{% if review.topic_tags %}<p class="muted">Topics: {{ review.topic_labels|join:', ' }}</p>{% endif %}{% if user.pk == review.user_id %}<p><a href="{% url 'ppa_profiles:review_history' review.pk %}">My review history</a></p>{% endif %}<a href="{% url 'report_ppa' ppa.pk %}?category=review_abuse&amp;review={{ review.pk }}">Report review</a></article>{% empty %}<p>No reviews yet.</p>{% endfor %}
+{% include 'pagination.html' %}
+{% if user.is_authenticated and user.email_verified %}<h3>{% if member_review %}Update your experience{% else %}Share your experience{% endif %}</h3>{% if member_review %}<p><a href="{% url 'ppa_profiles:review_history' member_review.pk %}">My review history</a></p>{% if not member_review.is_public %}<p class="notice">Your review is hidden by moderation. An edit does not republish it; moderators can review the updated content.</p>{% endif %}{% endif %}<form method="post" class="stack">{% csrf_token %}{{ review_form.as_p }}<p class="muted">Your public display name is shown. Keep state codes, phone numbers and personal details out of reviews.</p><button>Save review</button></form>{% endif %}
+</section>{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Suggest a PPA · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="eyebrow">Independent community knowledge</p><h1>{% if editing %}Edit your PPA proposal{% else %}Suggest a PPA{% endif %}</h1>
+  <p>Use public details from your own knowledge. A Google Place ID is not needed. Drafts are private; submitted proposals go to moderators before publication.</p>
+  <p class="notice">No posting documents, private phone numbers, home addresses or live locations. Publishing does not establish NYSC approval or guarantee acceptance.</p>
+  {% if editing %}<p>Editing resets review and verification. Any previously published directory record remains unchanged. Use its report link to request corrections.</p>{% endif %}
+  {% if duplicate_candidates %}<aside class="card"><h2>Check these existing entries</h2><p>A similar name may already be listed. Moderators review duplicates before adding a place.</p><ul>{% for ppa in duplicate_candidates %}<li><a href="{% url 'ppa_detail' ppa.id %}">{{ ppa.name }}</a> · {{ ppa.address }}</li>{% endfor %}</ul></aside>{% endif %}
+  <form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}
+    {% for field in form.visible_fields %}<div>{{ field.errors }}{{ field.label_tag }}{{ field }}{% if field.help_text %}<p class="field-hint">{{ field.help_text }}</p>{% endif %}</div>{% endfor %}
+    <p id="location-feedback" class="field-hint" aria-live="polite"></p>{{ form.action.errors }}
+    <div class="actions"><button type="submit" name="action" value="submit">Submit for review</button><button class="secondary" type="submit" name="action" value="draft">Save private draft</button></div>
+  </form><p><a href="{% url 'ppa_submissions:mine' %}">My proposals</a> · <a href="{% url 'search_ppa' %}">Find a PPA</a></p>
+</section>
+{% endblock %}

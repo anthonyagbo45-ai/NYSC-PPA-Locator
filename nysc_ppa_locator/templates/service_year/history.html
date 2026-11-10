@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}My PPA history | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero"><p><a href="{% url 'service_year_dashboard' %}">← My Service Year</a></p><h1>My PPA history</h1><p>Only your account can see this history. Your updates are personal records and do not establish NYSC approval.</p></header>
+<div class="stack section">
+{% for assignment in page_obj %}
+  <article class="card"><div class="badges"><span class="badge">{% if assignment.is_current %}Current PPA{% else %}Previous PPA{% endif %}</span><span class="badge">{{ assignment.get_status_display }}</span></div><h2>{{ assignment.ppa.name }}</h2><p>{{ assignment.ppa.lga.name }}, {{ assignment.ppa.state.name }}</p><p class="muted">{{ assignment.started_at|date:'j M Y' }} – {% if assignment.ended_at %}{{ assignment.ended_at|date:'j M Y' }}{% else %}present{% endif %}</p><a href="{% url 'assignment_update' assignment.pk %}">{% if assignment.is_current %}Update my progress{% else %}View private record{% endif %}</a></article>
+{% empty %}
+  <div class="card empty-state"><h2>No PPA saved yet</h2><p>Open a PPA profile and select “This is my PPA” to begin your tracker.</p><a class="button" href="{% url 'search_ppa' %}">Find a PPA</a></div>
+{% endfor %}
+</div>
+{% include 'pagination.html' %}
+{% endblock %}

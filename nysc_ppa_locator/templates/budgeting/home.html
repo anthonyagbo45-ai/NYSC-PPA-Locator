@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}My budget | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero"><p><a href="{% url 'service_year_dashboard' %}">← My Service Year</a></p><p class="eyebrow">Your private space</p><h1>My budget</h1><p>Track everyday spending in Nigerian naira and set an optional monthly limit. All member tools are free.</p></header>
+<aside class="notice"><strong>Private to your account.</strong> Avoid bank details, passwords and other people’s personal information. This is your own planning tool; it does not connect to a bank or collect payments.</aside>
+<section class="card section" aria-label="Choose a budget month"><form method="get" class="stack">{{ month_form.as_p }}<button type="submit">Show month</button></form></section>
+{% if month %}
+<section class="section" aria-labelledby="budget-month-title">
+  <div class="section-heading"><h2 id="budget-month-title">{{ month|date:'F Y' }}</h2><nav class="actions" aria-label="Budget month navigation">{% if previous_month %}<a href="?month={{ previous_month }}">← Previous month</a>{% endif %}{% if next_month %}<a href="?month={{ next_month }}">Next month →</a>{% endif %}</nav></div>
+  <div class="cards">
+    <article class="card"><p class="eyebrow">Recorded spending</p><h3>NGN {{ total_spent|floatformat:'2g' }}</h3><p>{{ expense_count }} expense{{ expense_count|pluralize }} this month.</p><a class="button" href="{% url 'budgeting:expense_add' %}?month={{ month|date:'Y-m' }}">Add an expense</a></article>
+    <article class="card"><p class="eyebrow">My spending limit</p>{% if budget %}<h3>NGN {{ budget.limit|floatformat:'2g' }}</h3>{% if overspent %}<p class="notice warning">Your recorded spending is NGN {{ overspent|floatformat:'2g' }} above your limit.</p>{% else %}<p>NGN {{ remaining|floatformat:'2g' }} remaining.</p>{% endif %}{% else %}<h3>No limit set</h3><p>You can record expenses with or without a monthly spending limit.</p>{% endif %}<a class="button secondary" href="{% url 'budgeting:budget_edit' %}?month={{ month|date:'Y-m' }}">{% if budget %}Edit spending limit{% else %}Set spending limit{% endif %}</a></article>
+  </div>
+</section>
+<section class="section" aria-labelledby="category-title"><h2 id="category-title">Spending by category</h2><div class="cards">{% for category in categories %}<article class="card"><h3>{{ category.label }}</h3><p>NGN {{ category.amount|floatformat:'2g' }}</p><p class="muted">{{ category.count }} expense{{ category.count|pluralize }}</p></article>{% endfor %}</div></section>
+<section class="section" aria-labelledby="expense-history-title"><h2 id="expense-history-title">My expenses</h2>{% if page_obj %}<div class="stack">{% for expense in page_obj %}<article class="card"><div class="section-heading"><h3>{{ expense.get_category_display }} · NGN {{ expense.amount|floatformat:'2g' }}</h3><p class="muted">{{ expense.spent_on|date:'j M Y' }}</p></div>{% if expense.note %}<p>{{ expense.note|linebreaksbr }}</p>{% endif %}<div class="actions"><a href="{% url 'budgeting:expense_edit' expense.pk %}">Edit expense</a><a href="{% url 'budgeting:expense_delete' expense.pk %}">Delete expense</a></div></article>{% endfor %}</div>{% include 'pagination.html' %}{% else %}<p class="empty-state">No expenses recorded for this month. Add one whenever you want to start tracking.</p>{% endif %}</section>
+{% endif %}
+{% endblock %}

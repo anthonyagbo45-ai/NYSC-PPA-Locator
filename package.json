@@ -1,0 +1,17 @@
+{
+  "name": "ppa-locator-assets",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local production styles for the PPA Locator Django templates",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./nysc_ppa_locator/static_src/tailwind.css -o ./nysc_ppa_locator/static/locator/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./nysc_ppa_locator/static_src/tailwind.css -o ./nysc_ppa_locator/static/locator/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.5",
+    "tailwindcss": "4.3.5"
+  }
+}

@@ -1,333 +1,276 @@
-import requests
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, get_user_model
-from django.contrib.auth.decorators import login_required
+from difflib import SequenceMatcher
+import re
+from urllib.parse import urlencode
 from django.contrib import messages
-from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.core import signing
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.conf import settings
-from .models import PPA, Review
+from django.views.decorators.cache import never_cache
+from django.db.models import Count, Q
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.debug import sensitive_post_parameters
+from config.security import rate_limit, check_rate_limit
+from accounts.views import register, user_login
+from .forms import SearchForm, ReviewForm, LivePlaceForm, CommunityPlaceForm
+from .models import PPA
+from .profile_services import save_member_review, get_public_profile_claims
+from .navigation import directions_url, destination_data
+from .services import search_google_places, PlacesUnavailable
+from .location import assess_place_location
 from locations.models import State, LGA
 
-User = get_user_model()
 
+@require_GET
 def landing(request):
-    """Render the public home/landing page with states loaded for the dropdown."""
-    states = State.objects.all().order_by('name')
-    context = {
-        'states': states,
-    }
-    return render(request, 'ppas/search.html', context)
+    return dynamic_place_search_view(request)
 
+
+@sensitive_post_parameters('password', 'confirm_password')
+@require_POST
 def portal_entry(request):
-    """Handle corps member sign-in and registration from the landing form."""
-    if request.method == 'GET':
-        state_code = request.GET.get('state_code')
-        password = request.GET.get('password')
-        full_name = request.GET.get('full_name')
-        email = request.GET.get('email')
-        state_id = request.GET.get('state')
-        lga_id = request.GET.get('lga')
+    if request.POST.get('mode') == 'login':
+        return user_login(request)
+    if request.POST.get('mode') != 'register':
+        return render(request, 'ppas/form_error.html', {'error': 'Choose sign in or registration to continue.'}, status=400)
+    return register(request)
 
-        if not state_code or not password:
-            messages.error(request, "State code and password are required.")
-            return redirect('landing')
-
-        # Try to authenticate as an existing user
-        user = authenticate(request, username=state_code, password=password)
-        
-        if user is not None:
-            login(request, user)
-        else:
-            try:
-                user = User.objects.get(state_code=state_code)
-                messages.error(request, "Invalid password for this state code.")
-                return redirect('landing')
-            except User.DoesNotExist:
-                state_obj = State.objects.filter(id=state_id).first() if state_id else None
-                lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
-
-                user = User.objects.create_user(
-                    state_code=state_code,
-                    email=email or '',
-                    password=password,
-                    first_name=full_name or ''
-                )
-                
-                if hasattr(user, 'state_posted'):
-                    user.state_posted = state_obj
-                if hasattr(user, 'lga_posted'):
-                    user.lga_posted = lga_obj
-                user.save()
-
-                login(request, user)
-
-        return redirect('dashboard')
-        
-    return redirect('landing')
 
 @login_required
+@require_GET
 def dashboard(request):
-    """Render the main user dashboard (Step 1)."""
-    context = {
-        'user': request.user,
-    }
-    return render(request, 'ppas/dashboard.html', context)
+    from service_year.views import dashboard as service_dashboard
+    return service_dashboard(request)
 
-@login_required
+
+@require_GET
 def search_ppa(request):
-    states = State.objects.all().order_by('name')
-    context = {
-        'states': states,
-        'default_state': getattr(request.user, 'state_posted', None),
-        'default_lga': getattr(request.user, 'lga_posted', None),
-    }
-    return render(request, 'ppas/search.html', context)
+    return dynamic_place_search_view(request)
 
-@login_required
+
+@require_GET
 def search_results(request):
-    query = request.GET.get('q', '')
-    state_id = request.GET.get('state')
-    lga_id = request.GET.get('lga')
-    category = request.GET.get('category')
+    return dynamic_place_search_view(request)
 
-    results = PPA.objects.select_related('state', 'lga').all()
 
-    if query:
-        results = results.filter(name__icontains=query)
-    if state_id:
-        results = results.filter(state_id=state_id)
-    if lga_id:
-        results = results.filter(lga_id=lga_id)
-    if category:
-        results = results.filter(category=category)
+def _normalise(text):
+    return ' '.join(re.findall(r'\w+', text.casefold()))
 
-    return render(request, 'ppas/results.html', {
-        'ppas': results,
-        'query': query,
-        'selected_state': State.objects.filter(id=state_id).first() if state_id else None,
-        'selected_lga': LGA.objects.filter(id=lga_id).first() if lga_id else None,
-    })
 
+def _possible_matches(queryset, query):
+    """Only examine a bounded, selected-LGA set; do not fuzzy-scan the country."""
+    query = _normalise(query)
+    matches = []
+    for record in queryset.values('pk', 'name', 'aliases')[:300]:
+        variants = [record['name'], *(record['aliases'] or '').split(',')]
+        best = 0
+        for variant in variants:
+            norm = _normalise(variant)
+            acronym = ''.join(word[0] for word in norm.split() if word not in ('of', 'the', 'and'))
+            score = 1 if query == acronym else SequenceMatcher(None, query, norm).ratio()
+            best = max(best, score)
+        if best >= 0.72:
+            matches.append((best, record['pk']))
+    return [pk for _, pk in sorted(matches, reverse=True)[:25]]
+
+
+@require_GET
+def dynamic_place_search_view(request):
+    params = request.GET.copy()
+    if request.user.is_authenticated and 'state' not in params:
+        params['state'] = str(request.user.state_posted_id or '')
+        if 'lga' not in params:
+            params['lga'] = str(request.user.lga_posted_id or '')
+    form = SearchForm(params)
+    context = {'search_form': form, 'states': State.objects.order_by('name'), 'lgas': [], 'places': [],
+               'query': params.get('q', ''), 'selected_state': params.get('state', ''),
+               'selected_lga': params.get('lga', ''), 'provider_error': '', 'possible_matches': False}
+    if not form.is_valid():
+        return render(request, 'ppas/directory.html', context, status=400)
+    data = form.cleaned_data
+    state = State.objects.filter(pk=data['state']).first() if data['state'] else None
+    lga = LGA.objects.filter(pk=data['lga'], state=state).first() if data['lga'] and state else None
+    if data['state'] and not state:
+        form.add_error('state', 'Choose a valid state.')
+    if data['lga'] and not lga:
+        form.add_error('lga', 'Choose an LGA belonging to this state.')
+    if form.errors:
+        return render(request, 'ppas/directory.html', context, status=400)
+    if state:
+        context['lgas'] = LGA.objects.filter(state=state).order_by('name')
+    results = PPA.objects.select_related('state', 'lga').annotate(confirmation_total=Count('confirmations')).order_by('name', 'pk')
+    if state:
+        results = results.filter(state=state)
+    if lga:
+        results = results.filter(lga=lga)
+    if data['category']:
+        results = results.filter(category=data['category'])
+    scoped = results
+    if data['q']:
+        results = results.filter(Q(name__icontains=data['q']) | Q(aliases__icontains=data['q']))
+        if lga and not results.exists():
+            ids = _possible_matches(scoped.order_by('pk'), data['q'])
+            if ids:
+                results = scoped.filter(pk__in=ids)
+                context['possible_matches'] = True
+    elif not state:
+        results = results.none()
+    page = Paginator(results, 25).get_page(params.get('page'))
+    page_params = params.copy()
+    page_params.pop('page', None)
+    page_params.pop('google', None)  # Turning a directory page never repeats a paid API call.
+    context.update({'saved_ppas': page, 'ppas': page, 'page_obj': page,
+                    'page_query': page_params.urlencode(), 'search_query': page_params.urlencode()})
+    discover = params.get('google') == '1' or (params.get('find') == '1' and data['q'] and not page.paginator.count and 'page' not in params)
+    if discover:
+        if not data['q'] or not state or not lga:
+            context['provider_error'] = 'Enter a PPA name and select a state and LGA before searching Google.'
+        else:
+            limited = check_rate_limit(request, 'places-search', 15, period=60)
+            if limited is not None:
+                context['provider_error'] = 'Search is busy. Please try again shortly; saved PPAs are still available.'
+            else:
+                try:
+                    places = search_google_places(data['q'], state.name, lga.name)
+                    for place in places:
+                        status, message = assess_place_location(place, state.name, lga.name)
+                        place.update(location_status=status, location_message=message)
+                        place['preview_token'] = signing.dumps({'place': place.copy(), 'state': state.pk, 'lga': lga.pk, 'query': data['q']}, salt='place-preview', compress=True)
+                        if request.user.is_authenticated:
+                            place['token'] = signing.dumps({'user_id': request.user.pk, 'place': place}, salt='google-place', compress=True)
+                    context['places'] = places
+                    context['google_searched'] = True
+                except PlacesUnavailable as exc:
+                    context['provider_error'] = exc.message
+    response = render(request, 'ppas/directory.html', context)
+    if discover:
+        response['Cache-Control'] = 'private, no-store'
+    return response
+
+
+@require_http_methods(['GET', 'POST'])
+@rate_limit('reviews', 20)
 def ppa_detail(request, pk):
     ppa = get_object_or_404(PPA.objects.select_related('state', 'lga'), pk=pk)
-
+    member_review = ppa.reviews.filter(user=request.user).first() if request.user.is_authenticated else None
+    form = ReviewForm(request.POST if request.method == 'POST' else None, instance=member_review)
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            messages.error(request, 'You must be logged in to submit a review.')
             return redirect('login')
+        if not request.user.email_verified:
+            messages.info(request, 'Verify your email before contributing reviews.')
+            return redirect('profile')
+        if form.is_valid():
+            try:
+                save_member_review(ppa=ppa, user=request.user, cleaned_data=form.cleaned_data)
+            except ValidationError as error:
+                if hasattr(error, 'message_dict'):
+                    for field, errors in error.message_dict.items():
+                        form.add_error(field if field in form.fields else None, errors)
+                else:
+                    form.add_error(None, error)
+            else:
+                messages.success(request, 'Your review has been saved.')
+                return redirect('ppa_detail', pk=pk)
+    reviews = Paginator(ppa.reviews.filter(is_public=True).select_related('user').order_by('-created_at', '-pk'), 20).get_page(request.GET.get('page'))
+    context = {'ppa': ppa, 'reviews': reviews, 'page_obj': reviews, 'review_form': form,
+               'directions_url': directions_url(ppa), 'walking_url': directions_url(ppa, 'walking'),
+               'confirmation_total': ppa.confirmations.count(), 'bookmark_saved': False, 'member_review': member_review}
+    if request.user.is_authenticated:
+        context['bookmark_saved'] = ppa.bookmarks.filter(user=request.user).exists()
+    context['profile_claims'] = get_public_profile_claims(ppa)
+    from .submission_services import get_public_submission_provenance
+    context['independent_provenance'] = get_public_submission_provenance(ppa)
+    context['is_current_ppa'] = False
+    if request.user.is_authenticated:
+        from service_year.models import MemberPPA
+        context['is_current_ppa'] = MemberPPA.objects.filter(user=request.user, ppa=ppa, ended_at__isnull=True).exists()
+    context['navigation_config'] = _navigation_config(ppa, ppa_id=ppa.pk)
+    return render(request, 'ppas/detail.html', context, status=400 if request.method == 'POST' and form.errors else 200)
 
-        rating = request.POST.get('rating')
-        comment = request.POST.get('comment', '').strip()
 
-        if not rating or not comment:
-            messages.error(request, 'Please provide both a star rating and a comment.')
-            return redirect('ppa_detail', pk=pk)
-
-        try:
-            rating_val = int(rating)
-            if not (1 <= rating_val <= 5):
-                raise ValueError("Out of range")
-        except ValueError:
-            messages.error(request, 'Invalid rating submitted.')
-            return redirect('ppa_detail', pk=pk)
-
-        review, created = Review.objects.update_or_create(
-            ppa=ppa,
-            user=request.user,
-            defaults={
-                'rating': rating_val,
-                'comment': comment,
-            }
-        )
-
-        if created:
-            messages.success(request, 'Your review has been posted ✓')
-        else:
-            messages.success(request, 'Your review has been updated ✓')
-
-        return redirect('ppa_detail', pk=pk)
-
-    reviews = ppa.reviews.select_related('user').order_by('-created_at')
-
-    return render(request, 'ppas/detail.html', {
-        'ppa': ppa,
-        'reviews': reviews,
-    })
-
-# API Endpoint for dynamic LGA loading (Vanilla JS Fetch)
-def load_lgas(request):
-    state_id = request.GET.get('state')
-    if not state_id:
-        return JsonResponse([], safe=False)
-    lgas = LGA.objects.filter(state_id=state_id).order_by('name')
-    return JsonResponse(list(lgas.values('id', 'name')), safe=False)
-
-# Google Places API (New) Integration with optional LGA filtering
-def search_google_places(query, state_name="Nigeria", lga_name=""):
-    """
-    Searches Google Places API (New) for institutions, offices, and businesses in Nigeria.
-    """
-    api_key = settings.GOOGLE_MAPS_API_KEY
-    if not api_key:
-        print("DEBUG: Google Maps API key is missing from settings.")
-        return []
-
-    if lga_name:
-        search_query = f"{query}, {lga_name}, {state_name}, Nigeria"
+def _navigation_config(place, **reference):
+    destination = destination_data(place)
+    if isinstance(place, dict):
+        area = place.get('area', '')
     else:
-        search_query = f"{query}, {state_name}, Nigeria"
-        
-    url = "https://places.googleapis.com/v1/places:searchText"
-    headers = {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': api_key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri'
+        area = f'{place.lga.name}, {place.state.name}'
+    return {
+        'name': destination['name'], 'address': destination['address'], 'area': area,
+        'destination': destination['map_destination'], 'external_url': directions_url(place),
+        'browser_key': settings.GOOGLE_MAPS_BROWSER_API_KEY, 'summary_url': '/api/route/', **reference,
     }
-    payload = {'textQuery': search_query}
 
+
+@require_POST
+@never_cache
+def discovered_place(request):
+    """Transient details preserve search → select → directions for guests too."""
+    token = request.POST.get('preview_token', '')
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
-        
-        places_list = data.get('places', [])
-        results = []
-        for place in places_list:
-            display_name = place.get('displayName', {}).get('text', '')
-            address = place.get('formattedAddress', '')
-            location = place.get('location', {})
-            place_id = place.get('id', '')
-            google_maps_uri = place.get('googleMapsUri', '')
-            
-            if not google_maps_uri and place_id:
-                google_maps_uri = f"https://www.google.com/maps/search/?api=1&query=Google&query_place_id={place_id}"
+        payload = signing.loads(token, salt='place-preview', max_age=900)
+        place = payload['place']
+        state = State.objects.get(pk=payload['state'])
+        lga = LGA.objects.get(pk=payload['lga'], state=state)
+        validation = LivePlaceForm({**place, 'state': str(state.pk), 'lga': str(lga.pk)})
+        if not validation.is_valid() or not place.get('place_id'):
+            raise ValueError('Invalid place')
+    except (signing.BadSignature, KeyError, TypeError, ValueError, State.DoesNotExist, LGA.DoesNotExist):
+        return render(request, 'ppas/form_error.html', {'error': 'This search result has expired. Search again to choose your PPA.'}, status=400)
+    status, message = assess_place_location(place, state.name, lga.name)
+    place.update(area=f'{lga.name}, {state.name}', lga=lga.name, state=state.name, location_status=status, location_message=message)
+    context = {
+        'place': place, 'preview_token': token,
+        'navigation_config': _navigation_config(place, preview_token=token),
+        'selected_state': str(state.pk), 'selected_lga': str(lga.pk),
+        'query': payload.get('query', ''), 'back_query': urlencode({'state': state.pk, 'lga': lga.pk, 'q': payload.get('query', '')}),
+    }
+    if request.user.is_authenticated:
+        context['place_token'] = signing.dumps({'user_id': request.user.pk, 'place': place}, salt='google-place', compress=True)
+    return render(request, 'ppas/discovered_detail.html', context)
 
-            results.append({
-                'name': display_name,
-                'address': address,
-                'latitude': location.get('latitude'),
-                'longitude': location.get('longitude'),
-                'place_id': place_id,
-                'google_maps_url': google_maps_uri,
-            })
-        return results
-    except Exception as e:
-        print(f"Google Places API Exception: {e}")
-    
-    return []
+
+@require_GET
+def load_lgas(request):
+    value = request.GET.get('state', '')
+    if not value:
+        return JsonResponse([], safe=False)
+    if not value.isascii() or not value.isdigit() or len(value) > 10 or not 0 < int(value) <= 2147483647:
+        return JsonResponse({'error': 'Invalid state.'}, status=400)
+    return JsonResponse(list(LGA.objects.filter(state_id=int(value)).order_by('name').values('id', 'name')), safe=False)
+
 
 @login_required
+@require_POST
+@rate_limit('save-place', 10)
 def save_live_place_view(request):
-    """
-    Saves selected Google Places result with State, LGA, and GPS coordinates,
-    then transitions directly to Step 3 (PPA Detail View).
-    """
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        address = request.POST.get('address')
-        state_id = request.POST.get('state')
-        lga_id = request.POST.get('lga')
-        place_id = request.POST.get('place_id')
-        latitude = request.POST.get('latitude')
-        longitude = request.POST.get('longitude')
-        google_maps_url = request.POST.get('google_maps_url')
-
-        if not name or not address:
-            messages.error(request, "Invalid place data submitted.")
-            return redirect('live_search')
-
-        if not google_maps_url:
-            if place_id:
-                google_maps_url = f"https://www.google.com/maps/search/?api=1&query=Google&query_place_id={place_id}"
-            else:
-                google_maps_url = f"https://www.google.com/maps/search/?q={requests.utils.quote(name)}"
-
-        # Resolve State with fallback to user's registered state
-        state_obj = None
-        if state_id:
-            if str(state_id).isdigit():
-                state_obj = State.objects.filter(id=int(state_id)).first()
-            else:
-                state_obj = State.objects.filter(name__iexact=state_id).first()
-        if not state_obj and hasattr(request.user, 'state_posted'):
-            state_obj = request.user.state_posted
-        if not state_obj:
-            state_obj = State.objects.first()
-
-        # Resolve LGA with fallback to user's registered LGA or state default to satisfy NOT NULL constraint
-        lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
-        if not lga_obj and hasattr(request.user, 'lga_posted'):
-            lga_obj = request.user.lga_posted
-        if not lga_obj and state_obj:
-            lga_obj = LGA.objects.filter(state=state_obj).first()
-
-        ppa, created = PPA.objects.get_or_create(
-            name=name,
-            state=state_obj,
-            lga=lga_obj,
-            defaults={
-                'address': address,
-                'category': 'Public Sector / Organization',
-                'description': f'Discovered via Google Places Live Search (Place ID: {place_id})',
-                'verified': True,
-                'latitude': float(latitude) if latitude else None,
-                'longitude': float(longitude) if longitude else None,
-                'google_maps_url': google_maps_url,
-                'phone': 'N/A',  
-            }
-        )
-
-        if created:
-            messages.success(request, f"Successfully saved '{name}' to your PPA database! ✓")
-        else:
-            messages.info(request, f"'{name}' already exists in your database.")
-
-        # Transition directly to Step 3 (PPA Detail View)
-        return redirect('ppa_detail', pk=ppa.pk)
-        
-    return redirect('live_search')
-
-def dynamic_place_search_view(request):
-    query = request.GET.get('q', '')
-    state_param = request.GET.get('state', '')
-    lga_id = request.GET.get('lga', '')
-    places = []
-
-    states = State.objects.all().order_by('name')
-
-    # Handle state_param whether it's sent as a numeric ID or text name (e.g. 'Benue')
-    state_obj = None
-    if state_param:
-        if str(state_param).isdigit():
-            state_obj = State.objects.filter(id=int(state_param)).first()
-        else:
-            state_obj = State.objects.filter(name__iexact=state_param).first()
-
-    if not state_obj:
-        state_obj = states.first()
-
-    state_name = state_obj.name if state_obj else "Nigeria"
-    state_id = str(state_obj.id) if state_obj else ""
-
-    lga_obj = LGA.objects.filter(id=lga_id).first() if lga_id else None
-    lga_name = lga_obj.name if lga_obj else ""
-
-    if query:
-        places = search_google_places(query, state_name=state_name, lga_name=lga_name)
-
-    # Retrieve saved PPAs from shared database matching the logged-in user's registered State and LGA strictly
-    saved_ppas = []
-    if request.user.is_authenticated:
-        user_state = getattr(request.user, 'state_posted', None)
-        user_lga = getattr(request.user, 'lga_posted', None)
-        if user_state and user_lga:
-            saved_ppas = PPA.objects.filter(state=user_state, lga=user_lga).select_related('state', 'lga')
-
-    context = {
-        'query': query,
-        'states': states,
-        'places': places,
-        'saved_ppas': saved_ppas,
-        'selected_state': state_id,
-        'selected_lga': lga_id,
-    }
-    return render(request, 'ppas/live_search.html', context)
+    if not request.user.email_verified:
+        messages.info(request, 'Verify your email before adding a PPA.')
+        return redirect('profile')
+    try:
+        payload = signing.loads(request.POST.get('place_token', ''), salt='google-place', max_age=1800)
+        if payload['user_id'] != request.user.pk:
+            raise signing.BadSignature('Wrong user')
+        place = payload['place']
+    except (signing.BadSignature, KeyError, TypeError, ValueError):
+        return render(request, 'ppas/form_error.html', {'error': 'This selection has expired. Search again to select a place.'}, status=400)
+    google_form = LivePlaceForm({**place, 'state': request.POST.get('state', ''), 'lga': request.POST.get('lga', '')})
+    form = CommunityPlaceForm(request.POST)
+    if not google_form.is_valid() or not form.is_valid() or not place.get('place_id'):
+        return render(request, 'ppas/form_error.html', {'error': 'Check the PPA details and confirm its state and LGA.', 'form': form}, status=400)
+    data = form.cleaned_data.copy()
+    data.pop('community_details_confirmed')
+    status, message = assess_place_location(place, data['state'].name, data['lga'].name)
+    if status == 'mismatch':
+        return render(request, 'ppas/form_error.html', {'error': message + ' Please choose the correct area and search again.'}, status=400)
+    # Only the Place ID comes from Google. Long-lived names, addresses and notes
+    # are independently supplied by the member, not populated from API content.
+    defaults = {**data, 'verified': False, 'source': 'community', 'location_status': status, 'submitted_by': request.user}
+    ppa, created = PPA.objects.get_or_create(place_id=place['place_id'], defaults=defaults)
+    if not created and (ppa.state_id != data['state'].pk or ppa.lga_id != data['lga'].pk):
+        messages.warning(request, 'This place is already listed in a different area. Report a correction if its location is wrong.')
+    messages.success(request, 'PPA saved for the community.' if created else 'This PPA is already in the shared directory.')
+    return redirect('ppa_detail', pk=ppa.pk)

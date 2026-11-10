@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Remove my spending limit | PPA Locator{% endblock %}
+{% block content %}<section class="card section max-w-3xl"><p><a href="{% url 'budgeting:home' %}">← My budget</a></p><h1>Remove my spending limit</h1><p>Your expenses will remain in your private records.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit" class="secondary">Remove spending limit</button></form></section>{% endblock %}

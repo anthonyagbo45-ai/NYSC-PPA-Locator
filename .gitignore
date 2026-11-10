@@ -1,0 +1,30 @@
+# Credentials and machine-specific configuration
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+# Existing local databases and private/generated runtime data
+*.sqlite3
+*.sqlite3-*
+*.dump
+*.gpg
+media/
+**/media/
+staticfiles/
+**/staticfiles/
+
+# Rebuild dependencies from verified lock/manifests
+.venv/
+venv/
+**/.venv/
+**/venv/
+node_modules/
+**/node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+.cache/

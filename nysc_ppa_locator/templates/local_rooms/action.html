@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ action_title }} · Local rooms{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">{{ room.title }}</p><h1>{{ action_title }}</h1><p>{{ explanation }}</p>
+    {% if notification_settings %}
+        {% if not community_notifications_enabled %}<p class="notice">Room notifications are paused because your community notification choice is off. You can save this room choice and <a href="{% url 'notifications:preferences' %}">enable community notifications in My reminders</a> when you want updates.</p>{% endif %}
+        {% if room.status != 'active' %}<p class="notice">This room is {{ room.status_label|lower }}. New notifications are paused; you can turn your room choice off.</p>{% endif %}
+    {% endif %}
+    <form method="post" class="card stack">
+        {% csrf_token %}{{ form.non_field_errors }}
+        {% for field in form %}{% include 'local_rooms/_field.html' %}{% endfor %}
+        <div class="actions"><button type="submit">{{ button_label }}</button><a href="{% url 'local_rooms:my_rooms' %}">My rooms</a></div>
+    </form>
+    {% include 'local_rooms/_links.html' %}
+</section>
+{% endblock %}

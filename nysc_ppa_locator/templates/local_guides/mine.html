@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}My local contributions · PPA Locator{% endblock %}
+{% block content %}
+<section class="section">
+    <p class="eyebrow">Your private contribution space</p><h1>My local contributions</h1>
+    <p>Drafts and pending entries are private. Reconfirm old information when you check it again; publication and independent verification are reviewed separately.</p>
+    <div class="actions"><a href="{% url 'local_guides:create' 'housing' %}">Share accommodation</a><a href="{% url 'local_guides:create' 'fare' %}">Share a transport estimate</a><a href="{% url 'local_guides:create' 'service' %}">Share a service</a></div>
+    <div class="cards">
+    {% for listing in listings %}
+        <article class="card">
+            <p class="eyebrow">{{ listing.kind_label }}</p><h2><a href="{% url 'local_guides:detail' listing.id %}">{{ listing.title }}</a></h2>
+            <p><span class="badge">{{ listing.publication_label }}</span> · {{ listing.area }}, {{ listing.lga_name }}</p>
+            {% include 'local_guides/_freshness.html' %}
+            {% if listing.publication_status != 'archived' %}
+                {% if listing.is_stale %}<p class="notice warning">A new check is due. Reconfirm availability or update the information before resubmitting.</p>{% endif %}
+                <div class="actions"><a class="button secondary" href="{% url 'local_guides:edit' listing.id %}">Edit information</a><a class="button secondary" href="{% url 'local_guides:reconfirm' listing.id %}">Reconfirm details</a></div>
+                <form method="post" action="{% url 'local_guides:archive' listing.id %}">{% csrf_token %}<button type="submit" class="secondary">Withdraw from public browsing</button></form>
+            {% endif %}
+            <p><a href="{% url 'local_guides:history' listing.id %}">My private revision history</a></p>
+        </article>
+    {% empty %}<p class="empty-state">No local contributions yet. Share information you know independently to help the next corps member.</p>{% endfor %}
+    </div>
+    {% include 'pagination.html' %}
+    <p><a href="{% url 'local_guides:saved' %}">My watchlist</a> · <a href="{% url 'local_guides:reports' %}">My private reports</a> · <a href="{% url 'local_guides:home' %}">Browse local guidance</a></p>
+</section>
+{% endblock %}

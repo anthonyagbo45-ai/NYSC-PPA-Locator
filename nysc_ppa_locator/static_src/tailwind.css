@@ -1,0 +1,8 @@
+/* Keep the existing app.css defaults: deliberately omit Tailwind preflight. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+/* Only application templates and scripts define generated utility classes. */
+@source "../templates";
+@source "../static/**/*.js";

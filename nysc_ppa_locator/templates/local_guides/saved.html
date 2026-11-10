@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}My housing watchlist and saved guidance · PPA Locator{% endblock %}
+{% block content %}
+<section class="section">
+    <p class="eyebrow">Private saved guidance</p><h1>My local watchlist</h1>
+    <p>Keep accommodation reports, transport estimates and services together. Saving an entry does not reserve a room, contact an owner or change your assigned PPA.</p>
+    <div class="cards">
+    {% for bookmark in bookmarks %}<div class="stack">
+        {% if bookmark.listing %}{% include 'local_guides/_listing_card.html' with listing=bookmark.listing %}{% else %}<article class="card"><h2>Listing currently unavailable</h2><p>This entry has been withdrawn or is awaiting a new review. Its latest private information is not shown here.</p></article>{% endif %}
+        <form method="post" action="{% url 'local_guides:bookmark' bookmark.id %}">{% csrf_token %}<button class="secondary" type="submit" name="action" value="remove">Remove from my watchlist</button></form>
+    </div>{% empty %}<p class="empty-state">Your watchlist is empty. Open a local report and choose Save to my watchlist.</p>{% endfor %}
+    </div>{% include 'pagination.html' %}
+    <p><a href="{% url 'local_guides:home' %}">Find local guidance</a> · <a href="{% url 'saved_ppas' %}">My saved PPA destinations</a></p>
+</section>
+{% endblock %}

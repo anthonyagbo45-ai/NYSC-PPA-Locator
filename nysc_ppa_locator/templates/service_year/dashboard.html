@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% block title %}My Service Year | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero">
+  <p class="eyebrow">Your private space</p>
+  <h1>My Service Year</h1>
+  <p>Keep your PPA, progress and useful places together. All member tools are free.</p>
+  <div class="actions"><a class="button" href="{% url 'search_ppa' %}">Find a PPA</a><a class="button secondary" href="{% url 'service_profile' %}">Service preferences</a></div>
+</header>
+{% if not user.email_verified %}
+<aside class="notice" aria-label="Email verification"><strong>Protect your account.</strong> <a href="{% url 'email_verification' %}">Verify your email</a> to contribute public reviews and location confirmations. Your private tracker is ready to use.</aside>
+{% endif %}
+<section class="cards section" aria-label="Your PPA and service preferences">
+  <article class="card">
+    <p class="eyebrow">My current PPA</p>
+    {% if current_assignment %}
+    <h2>{{ current_assignment.ppa.name }}</h2>
+    <p>{{ current_assignment.ppa.lga.name }}, {{ current_assignment.ppa.state.name }}</p>
+    <p><span class="badge">{{ current_assignment.get_status_display }}</span></p>
+    <p class="muted">Your personal progress, recorded since {{ current_assignment.started_at|date:'j M Y' }}.</p>
+    <div class="actions"><a class="button" href="{% url 'ppa_detail' current_assignment.ppa.pk %}">View PPA and directions</a><a class="button secondary" href="{% url 'assignment_update' current_assignment.pk %}">Update my progress</a></div>
+    {% else %}
+    <h2>Make this your service-year home</h2>
+    <p>Find your organisation, open its profile and choose “Save as my PPA”. You can then keep track of reporting and acceptance here.</p>
+    <p class="muted">Bookmarks stay separate from your assigned PPA.</p>
+    <a class="button" href="{% url 'search_ppa' %}">Find my PPA</a>
+    {% endif %}
+    <p><a href="{% url 'assignment_history' %}">My PPA history</a></p>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Optional service context</p><h2>Your service preferences</h2>
+    {% if service_profile %}<p>Stage: {{ service_profile.get_stage_display }}</p>{% if service_profile.batch %}<p>Batch: {{ service_profile.batch }}</p>{% endif %}{% else %}<p>You can add your service stage and batch when it is useful to you.</p>{% endif %}
+    <p class="muted">These details are private and voluntary. Your account remains available after POP.</p>
+    <p><a href="{% url 'service_profile' %}">Edit service preferences</a> · <a href="{% url 'profile' %}">Edit state, LGA and account</a></p>
+  </article>
+</section>
+<section class="section" aria-labelledby="activity-title">
+  <h2 id="activity-title">Your contributions and saved places</h2>
+  <div class="cards">
+    <article class="card"><h3>{{ bookmark_count }} saved place{{ bookmark_count|pluralize }}</h3><p>Keep useful locations for later without changing your assigned PPA.</p><a href="{% url 'saved_ppas' %}">Open saved places</a></article>
+    <article class="card"><h3>{{ report_count }} report{{ report_count|pluralize }}</h3><p>{{ pending_report_count }} awaiting review or being investigated.</p><a href="{% url 'my_reports' %}">Follow my reports</a></article>
+    <article class="card"><h3>{{ review_count }} review{{ review_count|pluralize }}</h3><p>Your experiences help other members. Open a PPA profile to review or update your experience.</p><a href="{% url 'search_ppa' %}">Find a place to review</a></article>
+  </div>
+</section>
+{% if recent_bookmarks %}
+<section class="section" aria-labelledby="recent-places-title"><h2 id="recent-places-title">Recently saved</h2><div class="cards">
+  {% for bookmark in recent_bookmarks %}<article class="card"><h3><a href="{% url 'ppa_detail' bookmark.ppa.pk %}">{{ bookmark.ppa.name }}</a></h3><p>{{ bookmark.ppa.lga.name }}, {{ bookmark.ppa.state.name }}</p></article>{% endfor %}
+</div></section>
+{% endif %}
+<section class="section" aria-labelledby="living-title"><h2 id="living-title">Living around your PPA</h2><div class="cards">
+  <article class="card"><h3>Accommodation and local tips</h3><p>Browse reported housing, transport estimates and local services. Check the source and date before relying on a listing.</p><div class="actions"><a class="button secondary" href="{% url 'local_guides:home' %}{% if current_assignment %}?state={{ current_assignment.ppa.state_id }}&amp;lga={{ current_assignment.ppa.lga_id }}{% endif %}">Explore my area</a><a href="{% url 'local_guides:saved' %}">My watchlist</a></div></article>
+  <article class="card"><h3>My private budget</h3><p>Plan a monthly spending limit and keep track of transport, rent, food and other expenses. Only your account can open these records.</p><a class="button secondary" href="{% url 'budgeting:home' %}">Open my budget</a></article>
+  <article class="card"><h3>Help the next batch</h3><p>Suggest a PPA missing from the directory, share local information or reconfirm details you previously submitted.</p><div class="actions"><a href="{% url 'ppa_submissions:overview' %}">Suggest a missing PPA</a><a href="{% url 'local_guides:mine' %}">My local contributions</a></div></article>
+</div></section>
+<section class="section" aria-labelledby="service-dates-title"><h2 id="service-dates-title">CDS, clearance and your dates</h2><div class="cards">
+  <article class="card"><h3>My CDS reference</h3>{% if selected_cds_group.available %}<p><a href="{% url 'service_resources:group_detail' selected_cds_group.group.id %}">{{ selected_cds_group.group.title }}</a></p><p class="muted">Your private choice is a reference, not verified group membership.</p>{% elif selected_cds_group %}<p>Your selected group is unavailable or needs reconfirmation. Choose a current group or clear your selection.</p>{% else %}<p>Choose a group if it helps you. Members in the same LGA may have different CDS groups and meeting dates.</p>{% endif %}<p><a href="{% url 'service_resources:select_group' %}">Choose or change my group</a></p><a href="{% url 'service_resources:cds' %}{% if current_assignment %}?state={{ current_assignment.ppa.state_id }}&amp;lga={{ current_assignment.ppa.lga_id }}{% endif %}">CDS resources and notices</a></article>
+  <article class="card"><h3>Clearance resources</h3><p>Read source-labelled local notices and official-site references. Confirm dates and requirements with your designated NYSC official.</p><a class="button secondary" href="{% url 'service_resources:clearance' %}{% if current_assignment %}?state={{ current_assignment.ppa.state_id }}&amp;lga={{ current_assignment.ppa.lga_id }}{% endif %}">Open clearance resources</a></article>
+  <article class="card"><h3>My private reminders</h3><p>{{ reminder_summary.unread_count }} unread reminder{{ reminder_summary.unread_count|pluralize }}.</p>{% for event in reminder_summary.upcoming_events %}<p><a href="{% url 'notifications:event_edit' event.id %}">{{ event.title }}</a><br><span class="muted">{{ event.starts_at|timezone:event.timezone_name|date:'j M Y, H:i' }} · {{ event.timezone_name }} · Personal date</span></p>{% empty %}<p>Add your own dates when useful. Reminder delivery is optional.</p>{% endfor %}<div class="actions"><a href="{% url 'notifications:home' %}">My dates and reminders</a><a href="{% url 'notifications:inbox' %}">Reminder inbox</a><a href="{% url 'notifications:preferences' %}">Notification preferences</a></div></article>
+</div></section>
+<section class="section" aria-labelledby="community-title"><h2 id="community-title">Corper Connect</h2><div class="cards">
+  <article class="card"><h3>Ask the community</h3><p>Find practical answers, share your experience and follow useful questions. Community advice remains available after POP.</p><div class="actions"><a class="button secondary" href="{% url 'community:home' %}{% if current_assignment %}?state={{ current_assignment.ppa.state_id }}&amp;lga={{ current_assignment.ppa.lga_id }}&amp;ppa={{ current_assignment.ppa.pk }}{% endif %}">Questions near my PPA</a><a href="{% url 'community:my_activity' %}">My questions and answers</a></div></article>
+  <article class="card"><h3>Local discussions</h3><p>Browse moderated rooms for your area. Request approval to join; your service preferences do not prove room membership.</p><div class="actions"><a href="{% url 'local_rooms:home' %}{% if current_assignment %}?state={{ current_assignment.ppa.state_id }}&amp;lga={{ current_assignment.ppa.lga_id }}{% endif %}">Find local rooms</a><a href="{% url 'local_rooms:my_rooms' %}">My rooms</a></div></article>
+  <article class="card"><h3>Reply notifications</h3><p>Choose which questions and rooms to follow, then enable community replies in your notification preferences. Delivery starts off.</p><div class="actions"><a href="{% url 'community_notifications:inbox' %}">My community inbox</a><a href="{% url 'notifications:preferences' %}">Notification preferences</a><a href="{% url 'community:blocks' %}">My blocked accounts</a></div></article>
+</div></section>
+<aside class="card section"><h2>What comes next</h2><p>Private messaging, photos, video calls and careers are planned for later checkpoints.</p><p class="muted">Your tracker, community discussions and personal reminders do not grant posting, transfer, clearance or other NYSC approval. Use designated NYSC officials and recognised NYSC systems for official decisions.</p></aside>
+{% endblock %}

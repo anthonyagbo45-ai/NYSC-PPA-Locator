@@ -1,0 +1,1 @@
+<p><a href="{% url 'local_rooms:home' %}">Discover local rooms</a>{% if user.is_authenticated %} · <a href="{% url 'local_rooms:my_rooms' %}">My rooms</a> · <a href="{% url 'local_rooms:my_reports' %}">My private room reports</a>{% endif %}</p>

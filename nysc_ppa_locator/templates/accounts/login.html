@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Sign in · PPA Locator{% endblock %}
+{% block content %}
+<section class="card max-w-md section"><h1>Sign in</h1><p>Use your state code and password. Searching and directions are also available without signing in.</p>
+<form method="post" action="{% url 'login' %}" class="stack">{% csrf_token %}<input type="hidden" name="next" value="{{ next }}">{{ form.as_p }}<button type="submit">Sign in</button></form>
+<p><a href="{% url 'password_reset' %}">Forgot password?</a> · <a href="{% url 'register' %}">Create an account</a></p></section>
+{% endblock %}

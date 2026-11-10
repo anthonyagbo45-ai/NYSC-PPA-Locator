@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}My private CDS preference | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Your private space</p><h1>My optional CDS preference</h1><p>Your selection is private and voluntary. It does not verify membership, attendance, authority or NYSC approval.</p>
+{% if private_selection.available %}<p>Current preference: <a href="{% url 'service_resources:group_detail' private_selection.group.id %}">{{ private_selection.group.title }}</a>{% if private_selection.group.is_stale %} · Needs reconfirmation{% endif %}.</p>{% elif private_selection %}<p class="notice">Your previous group is currently unavailable. Its latest private details are not displayed.</p>{% else %}<p>No group selected.</p>{% endif %}
+<form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}{{ form.group.errors }}{{ form.group }}{% if selected %}<h2>Choose {{ selected.title }}</h2><p>{{ selected.lga_name }}, {{ selected.state_name }}</p>{% else %}<h2>Clear my preference</h2><p>Saving without a selected group clears your private preference. You can choose a published group from its profile later.</p>{% endif %}{% include 'service_resources/_field.html' with field=form.confirmed %}<button type="submit">Save my private preference</button></form>
+<p><a href="{% url 'service_resources:cds' %}?view=groups">Browse published CDS groups</a></p>{% include 'service_resources/_disclaimer.html' %}</section>
+{% endblock %}

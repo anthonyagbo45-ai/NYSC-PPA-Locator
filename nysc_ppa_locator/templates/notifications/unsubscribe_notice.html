@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Stop a followed reminder | PPA Locator{% endblock %}
+{% block content %}<section class="card section"><h1>Stop reminders for this followed notice</h1><p>This affects your own reminders only. The public source notice is unchanged.</p><form method="post" action="{% url 'notifications:unsubscribe_notice' subscription_id %}" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Stop following this notice</button></form><p><a href="{% url 'notifications:home' %}">Back to my reminders</a></p></section>{% endblock %}

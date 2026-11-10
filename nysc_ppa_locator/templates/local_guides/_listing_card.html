@@ -1,0 +1,15 @@
+<article class="card result-card">
+    <p class="eyebrow">{{ listing.kind_label }}</p>
+    <h2><a href="{% url 'local_guides:detail' listing.id %}">{{ listing.title }}</a></h2>
+    <p class="place-area">{{ listing.area }} · {{ listing.lga_name }}, {{ listing.state_name }}</p>
+    {% if listing.ppa_name %}<p class="muted">Tagged with {{ listing.ppa_name }}; distance has not been measured.</p>{% endif %}
+    {% if listing.kind == 'housing' %}
+        <p><strong>{% if listing.housing.reported_rent != None %}₦{{ listing.housing.reported_rent|floatformat:2 }} {{ listing.housing.price_period_label|lower }}{% else %}Rent not reported{% endif %}</strong><br>{{ listing.housing.room_type_label }}</p>
+        {% if listing.is_stale or not listing.is_available %}<p class="notice warning">Availability is not current. Do not treat this as an available room.</p>{% else %}<p class="badge">Reported available when checked</p>{% endif %}
+    {% elif listing.kind == 'fare' %}
+        <p>{{ listing.fare.origin_area }} → {{ listing.fare.destination_area }}<br><strong>₦{{ listing.fare.amount_low|floatformat:2 }}–₦{{ listing.fare.amount_high|floatformat:2 }}</strong> per person · {{ listing.fare.mode_label }}</p>
+    {% else %}<p>{{ listing.service.category_label }}</p>{% endif %}
+    <p>{{ listing.summary|truncatechars:180 }}</p>
+    {% include 'local_guides/_freshness.html' %}
+    <a class="button secondary result-action" href="{% url 'local_guides:detail' listing.id %}">Read details</a>
+</article>

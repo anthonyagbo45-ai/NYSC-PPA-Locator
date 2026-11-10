@@ -1,0 +1,3 @@
+<div class="badges"><span class="badge">{{ resource.source_label }}</span><span class="badge">{{ resource.verification_label }}</span></div>
+<p class="muted">Observed or received {{ resource.observed_on|date:'j M Y' }} · {% if resource.checked_at %}Last checked {{ resource.checked_at|date:'j M Y' }}{% else %}No separate source check recorded{% endif %}<br>Reconfirmation due {{ resource.expires_at|date:'j M Y' }}</p>
+{% if resource.is_stale %}<p class="notice warning">Historical information: this source or schedule needs reconfirmation. Earlier verification does not establish current arrangements.</p>{% endif %}

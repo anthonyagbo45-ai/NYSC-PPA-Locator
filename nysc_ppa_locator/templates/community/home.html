@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Community questions · PPA Locator{% endblock %}
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Community knowledge · free public browsing</p>
+    <h1>Ask people who have been there</h1>
+    <p>Find practical questions and member suggestions about your PPA, local area and service year. Answers and helpful votes are community opinions. They do not establish NYSC approval or an official decision.</p>
+    <div class="actions"><a class="button" href="{% url 'community:question_add' %}">Ask a question</a>{% if user.is_authenticated %}<a href="{% url 'community:my_activity' %}">My questions, answers and follows</a>{% endif %}</div>
+</section>
+<section class="section card" aria-label="Filter questions">
+    <form method="get" class="stack">
+        {{ form.non_field_errors }}
+        <div class="cards">{% for field in form %}{% include 'community/_field.html' %}{% endfor %}</div>
+        <p id="location-feedback" class="field-hint" aria-live="polite">Choose a state to load its LGAs. Apply the area to choose a PPA or CDS group, then refine your search.</p>
+        <div class="actions"><button type="submit">Find questions</button><a href="{% url 'community:home' %}">Clear filters</a></div>
+    </form>
+</section>
+<section class="section">
+    <div class="section-heading"><h2>Community questions</h2><span class="result-count">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span></div>
+    <div class="cards">{% for question in questions %}{% include 'community/_question_card.html' %}{% empty %}<p class="empty-state">No questions match these filters yet. Try a wider area, or ask a question with the public context someone needs to help.</p>{% endfor %}</div>
+    {% include 'pagination.html' %}
+</section>
+<section class="section card"><h2>More local knowledge</h2><p><a href="{% url 'local_guides:home' %}">Accommodation, transport and local services</a> · <a href="{% url 'service_resources:home' %}">CDS and clearance resources</a>{% url 'local_rooms:home' as rooms_url %}{% if rooms_url %} · <a href="{{ rooms_url }}">Local community rooms</a>{% endif %}</p>
+{% if user.is_authenticated %}<p><a href="{% url 'community:reports' %}">My private reports</a> · <a href="{% url 'community:blocks' %}">My member blocks</a></p>{% endif %}</section>
+{% endblock %}

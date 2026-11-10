@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}My PPA progress | PPA Locator{% endblock %}
+{% block content %}
+<section class="card section max-w-3xl">
+  <p><a href="{% url 'service_year_dashboard' %}">← My Service Year</a></p><p class="eyebrow">Private personal tracker</p><h1>My PPA progress</h1>
+  <h2>{{ assignment.ppa.name }}</h2><p>{{ assignment.ppa.lga.name }}, {{ assignment.ppa.state.name }}</p>
+  <p class="notice">Record your own experience. This tracker does not grant posting, transfer, clearance or other NYSC approval. For official next steps, contact your designated NYSC officials through recognised NYSC systems.</p>
+  <p><a href="{% url 'ppa_detail' assignment.ppa.pk %}">View PPA and directions</a></p>
+  {% if assignment.is_current %}
+  <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Save my progress</button></form>
+  {% else %}
+  <p class="badge">Previous PPA · ended {{ assignment.ended_at|date:'j M Y' }}</p><h3>{{ assignment.get_status_display }}</h3>
+  {% if assignment.personal_notes %}<h3>Private notes</h3><p>{{ assignment.personal_notes|linebreaksbr }}</p>{% endif %}
+  <p>This record is kept as history. You can update your current PPA from My Service Year.</p>
+  {% endif %}
+  {% if changes %}<section class="section" aria-labelledby="progress-history-title"><h2 id="progress-history-title">Recent progress updates</h2><ol>{% for change in changes %}<li>{{ change.get_previous_status_display }} → {{ change.get_new_status_display }} <span class="muted">{{ change.created_at|date:'j M Y, H:i' }}</span></li>{% endfor %}</ol></section>{% endif %}
+  {% if assignment.is_current %}<details><summary>This is no longer my PPA</summary><p>Remove it from your current PPA while keeping your private progress history. You can choose another PPA later.</p><form method="post" action="{% url 'end_assignment' assignment.pk %}" class="stack">{% csrf_token %}{{ end_form.as_p }}<button type="submit" class="secondary">Move to my PPA history</button></form></details>{% endif %}
+</section>
+{% endblock %}

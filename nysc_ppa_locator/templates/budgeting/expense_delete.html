@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Delete expense | PPA Locator{% endblock %}
+{% block content %}<section class="card section max-w-3xl"><p><a href="{% url 'budgeting:home' %}?month={{ expense.spent_on|date:'Y-m' }}">← My budget</a></p><h1>Delete this expense?</h1><p>{{ expense.get_category_display }} · NGN {{ expense.amount|floatformat:'2g' }} · {{ expense.spent_on|date:'j M Y' }}</p>{% if expense.note %}<p>{{ expense.note|linebreaksbr }}</p>{% endif %}<p>This removes the expense from your private history and updates the monthly totals.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit" class="secondary">Delete expense</button></form></section>{% endblock %}

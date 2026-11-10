@@ -1,0 +1,132 @@
+name: Application tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sqlite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: nysc_ppa_locator
+    env:
+      DEBUG: 'True'
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SECRET_KEY: ci-only-local-test-key-never-used-for-a-deployed-application
+      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOOGLE_MAPS_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: nysc_ppa_locator/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Build production styles and check the committed asset
+        working-directory: .
+        run: |
+          npm ci
+          npm run build:css
+          git diff --exit-code -- nysc_ppa_locator/static/locator/tailwind.css
+      - name: Install into a fresh virtual environment
+        run: |
+          python -m venv "$RUNNER_TEMP/locator-venv"
+          "$RUNNER_TEMP/locator-venv/bin/python" -m pip install -r requirements.txt
+      - name: Check dependencies, schema and tests
+        run: |
+          "$RUNNER_TEMP/locator-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py check
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py makemigrations --check --dry-run
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config --verbosity 2
+
+  postgres-redis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: nysc_ppa_locator
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: locator_ci
+          POSTGRES_USER: locator_ci
+          POSTGRES_PASSWORD: ci-isolated-service-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U locator_ci -d locator_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DEBUG: 'True'
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SECRET_KEY: ci-only-local-test-key-never-used-for-a-deployed-application
+      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOOGLE_MAPS_API_KEY: ''
+      POSTGRES_DB: locator_ci
+      POSTGRES_USER: locator_ci
+      POSTGRES_PASSWORD: ci-isolated-service-password
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: '5432'
+      # These services exist only on the isolated CI runner. Production defaults
+      # to verify-full and must use its provider's trusted TLS configuration.
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: nysc_ppa_locator/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Build production styles and check the committed asset
+        working-directory: .
+        run: |
+          npm ci
+          npm run build:css
+          git diff --exit-code -- nysc_ppa_locator/static/locator/tailwind.css
+      - name: Install into a fresh virtual environment
+        run: |
+          python -m venv "$RUNNER_TEMP/locator-venv"
+          "$RUNNER_TEMP/locator-venv/bin/python" -m pip install -r requirements.txt
+      - name: Check dependencies, migrate and exercise shared services
+        run: |
+          "$RUNNER_TEMP/locator-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py check
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py makemigrations --check --dry-run
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py migrate --noinput
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config --verbosity 2

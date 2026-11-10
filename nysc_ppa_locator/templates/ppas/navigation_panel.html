@@ -1,0 +1,44 @@
+{% if navigation_config %}
+<section class="navigation-launch" aria-label="Directions to this PPA">
+    <button type="button" class="route-open-button" data-open-directions aria-haspopup="dialog" aria-controls="route-dialog">Get directions</button>
+    <p class="muted navigation-launch-note">See the route here, then start live navigation when you’re ready.</p>
+    <noscript><p><a class="button secondary" href="{{ navigation_config.external_url }}" target="_blank" rel="noopener noreferrer">Open directions in Google Maps</a></p></noscript>
+</section>
+{{ navigation_config|json_script:'navigation-config' }}
+<dialog id="route-dialog" class="route-dialog" aria-labelledby="route-title" aria-describedby="route-description">
+    <div class="route-dialog-shell">
+        <header class="route-header">
+            <div><p class="route-brand">PPA Locator <span aria-hidden="true">/</span> Directions</p><h2 id="route-title">{{ navigation_config.name }}</h2><p class="route-header-area">{{ navigation_config.area }}</p></div>
+            <button type="button" class="route-close secondary" data-close-directions aria-label="Close directions">Close <span aria-hidden="true">×</span></button>
+        </header>
+        <div class="route-layout">
+            <section class="route-map-area" aria-label="Route map">
+                <div id="route-map" class="route-map">
+                    <div class="route-map-placeholder"><span class="route-map-symbol" aria-hidden="true">↗</span><p>Your route will appear here.</p><p class="muted">Choose your starting point to continue.</p></div>
+                </div>
+                <p class="route-provider-credit">Map and routes powered by Google Maps</p>
+            </section>
+            <section class="route-controls" aria-label="Journey details">
+                <p id="route-description" class="muted">Get a route from your current location or enter a starting address. Your starting point is used for this journey and is not saved.</p>
+                <div class="route-destination"><span class="route-field-caption">Destination</span><h3>{{ navigation_config.name }}</h3>{% if navigation_config.address %}<p>{{ navigation_config.address }}</p>{% endif %}<p>{{ navigation_config.area }}</p></div>
+                <p id="route-status" class="route-status" role="status" aria-live="polite">Choose a starting point to see the route.</p>
+                <form id="route-origin-form" class="route-origin-form" novalidate>
+                    {% csrf_token %}
+                    <label for="route-origin">Starting point</label>
+                    <input id="route-origin" name="origin" type="text" maxlength="250" autocomplete="street-address" placeholder="Enter an address or nearby landmark" aria-describedby="route-origin-help">
+                    <p id="route-origin-help" class="muted">Include the town or state for a clearer match.</p>
+                    <div class="route-origin-actions"><button type="submit" class="secondary">Show route</button><button type="button" class="secondary" data-route-location>Use my current location</button></div>
+                    <label for="route-mode">Travel mode</label>
+                    <select id="route-mode" name="mode"><option value="driving">Driving</option><option value="walking">Walking</option></select>
+                </form>
+                <div class="route-summary" id="route-summary" aria-busy="false">
+                    <dl><div><dt>Estimated travel time</dt><dd id="route-duration">—</dd></div><div><dt>Route distance</dt><dd id="route-distance">—</dd></div></dl>
+                    <p id="route-summary-note" class="muted" role="status">Journey estimates appear when a route is available.</p>
+                </div>
+                <div class="route-next-actions"><a id="route-live-link" class="button" href="{{ navigation_config.external_url }}" target="_blank" rel="noopener noreferrer">Start live navigation <span class="route-link-note">Opens Google Maps</span></a><button type="button" class="secondary" data-route-retry>Retry route map</button></div>
+                <p class="route-guidance-note muted">The map here shows your route. Live spoken guidance and automatic rerouting continue in your navigation app. If the map stays blank, you can still use Start live navigation.</p>
+            </section>
+        </div>
+    </div>
+</dialog>
+{% endif %}

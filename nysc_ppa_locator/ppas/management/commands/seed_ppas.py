@@ -1,5 +1,6 @@
 import random
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from locations.models import State, LGA
 from ppas.models import PPA, Review
@@ -15,7 +16,7 @@ PPA_PREFIXES = [
 ]
 
 CATEGORIES = [
-    "Education", "Healthcare", "Public Sector", "Private Sector", "NGO", "Legal"
+    "Education", "Healthcare", "Public Sector", "Private Sector", "NGO"
 ]
 
 SAMPLE_REVIEWS = [
@@ -38,6 +39,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            raise CommandError('Mock data seeding is disabled in production.')
         total = options['total']
         self.stdout.write(self.style.WARNING("Starting database seeding process..."))
 
@@ -55,12 +58,12 @@ class Command(BaseCommand):
             all_states = [state]
 
         # 2. Fetch or Create test User accounts for review authors
-        test_user, _ = User.objects.get_or_create(
+        test_user, user_created = User.objects.get_or_create(
             email="tester@nysc.gov.ng",
             defaults={"full_name": "Test Corper", "state_code": "FC/24A/0001"}
         )
-        if not test_user.has_usable_password():
-            test_user.set_password("password123")
+        if user_created:
+            test_user.set_unusable_password()
             test_user.save()
 
         # 3. Generate PPAs
@@ -85,13 +88,10 @@ class Command(BaseCommand):
                     "category": random.choice(CATEGORIES),
                     "address": f"No. {random.randint(1, 150)} Broad Street, {chosen_lga.name}",
                     "description": f"Official PPA facility operating in {chosen_lga.name}, offering positions for qualified NYSC corps members.",
-                    "stipend": random.choice([15000, 20000, 25000, 30000, 50000, None]),
-                    "provides_accommodation": random.choice([True, False]),
-                    "accepting_corpers": random.choice([True, False]),
                     "latitude": lat,
                     "longitude": lng,
-                    "contact_email": f"info@ppa{i+1}.org.ng",
-                    "contact_phone": f"0803000{i:04d}",
+                    "email": f"info@ppa{i+1}.org.ng",
+                    "phone": f"0803000{i:04d}",
                 }
             )
 

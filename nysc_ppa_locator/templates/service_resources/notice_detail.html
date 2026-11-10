@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% load tz %}
+{% block title %}{{ resource.title }} | Service-year resources{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'service_resources:home' %}">CDS and clearance resources</a></p>
+<article class="card section">{% if private_preview %}<p class="notice warning">Your private preview · {{ resource.publication_label }}. Other members cannot read this draft or pending contribution.</p>{% endif %}
+<p class="eyebrow">{{ resource.kind_label }}</p><h1>{{ resource.title }}</h1><p class="place-area">{{ resource.lga_name }}, {{ resource.state_name }}</p>{% include 'service_resources/_freshness.html' %}
+{% if resource.group_title %}<p>Reported for <a href="{% url 'service_resources:group_detail' resource.group_id %}">{{ resource.group_title }}</a>. Other groups can have different arrangements.</p>{% elif resource.group_id %}<p class="notice warning">The linked group is currently unavailable. Confirm this context before relying on the report.</p>{% elif resource.kind == 'cds' %}<p class="notice">No particular CDS group is identified. Do not assume this report applies to your group or everyone in the LGA.</p>{% endif %}
+<p>{{ resource.body|linebreaksbr }}</p>
+{% if resource.event_at %}<h2>Reported schedule</h2>{% timezone resource.timezone_name %}<p>{{ resource.event_at|date:'j M Y, H:i' }}{% if resource.ends_at %} to {{ resource.ends_at|date:'j M Y, H:i' }}{% endif %} ({{ resource.timezone_name }}).</p>{% endtimezone %}<p class="muted">A reported date is not approval to attend or clear. Confirm any changes with your designated official.</p>{% else %}<p>No event date is specified. This resource is context, not a scheduled appointment.</p>{% endif %}
+{% if resource.batch_label %}<p>Reported batch or stream context: {{ resource.batch_label }}</p>{% endif %}{% if resource.stage %}<p>Reported service-stage context: {{ resource.stage_label }}</p>{% endif %}
+{% if resource.venue_hint %}<h2>Public venue context</h2><p>{{ resource.venue_hint }}</p>{% endif %}
+{% if resource.source_url %}<p><a href="{{ resource.source_url }}" target="_blank" rel="nofollow noopener noreferrer">Public supporting source</a></p>{% endif %}
+{% include 'service_resources/_disclaimer.html' %}
+<section class="section"><h2>Your reminder choices</h2>{% if resource.reminder_eligible %}<p>This currently checked, published source has a future reported time. You can explicitly opt in to an in-app reminder; check the source again before acting.</p><a class="button secondary" href="{% url 'notifications:subscribe_notice' resource.id %}">Choose a source-linked reminder</a>{% else %}<p>This information is not eligible for source-linked notifications. Unconfirmed, expired, unavailable or undated information does not trigger verified-notice reminders.</p>{% endif %}<p>You can choose to enter your own date as a <a href="{% url 'notifications:event_add' %}">private personal reminder</a>. A personal reminder is your own note and never inherits a community or official-source badge.</p></section>
+{% if not private_preview %}<p><a href="{% url 'service_resources:report_notice' resource.id %}">Report a problem or correction</a></p>{% endif %}
+{% if own %}<p><a href="{% url 'service_resources:edit_notice' resource.id %}">Edit my contribution</a> · <a href="{% url 'service_resources:notice_history' resource.id %}">My private revision history</a></p>{% endif %}</article>
+{% endblock %}

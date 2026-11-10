@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}My private service-resource reports | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero"><p class="eyebrow">Your private space</p><h1>My service-resource reports</h1><p>Only your reports appear here. Moderator evidence and later private target titles are excluded.</p></header><section class="stack">{% for report in reports %}<article class="card"><h2>{{ report.category_label }}</h2><p class="muted">Submitted {{ report.created_at|date:'j M Y' }} · {{ report.status_label }}</p><p>{{ report.details|linebreaksbr }}</p>{% if report.proposed_correction %}<p>Suggested correction: {{ report.proposed_correction|linebreaksbr }}</p>{% endif %}</article>{% empty %}<p class="empty-state">You have not reported a service resource.</p>{% endfor %}</section>{% include 'pagination.html' %}
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}My member blocks · Community{% endblock %}
+{% block content %}
+<section class="section"><h1>My member blocks</h1><p class="notice">Blocks prevent interactions and notifications between the accounts. Public questions, answers and room posts remain publicly readable, including as a guest. A block does not hide public information.</p><p>Choose an author from a public question, answer or room post to block them. There is no public member directory.</p>
+{% for entry in blocks %}<article class="card section"><h2>{{ entry.author_name }}</h2><p>Blocked {{ entry.created_at|date:'j M Y' }}</p><form method="post" action="{% url 'community:unblock' entry.id %}">{% csrf_token %}<button class="secondary">Remove this block</button></form></article>{% empty %}<p class="empty-state">You have no member blocks.</p>{% endfor %}{% include 'pagination.html' %}<p><a href="{% url 'community:home' %}">Community questions</a> · <a href="{% url 'community:reports' %}">My private reports</a></p></section>
+{% endblock %}

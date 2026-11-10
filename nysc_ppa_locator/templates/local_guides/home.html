@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Local living guide · PPA Locator{% endblock %}
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Community knowledge · free to use</p>
+    <h1>Settle into your service year</h1>
+    <p>Find reported accommodation, transport estimates and useful local services. Choose your area and check the source and date before making plans.</p>
+    <p class="notice">PPA Locator does not collect rent, deposits or booking fees. Community information and prices are not guarantees or NYSC endorsements.</p>
+</section>
+<section class="section card" aria-label="Filter local guidance">
+    {% if selected_ppa %}<p class="notice">Showing entries tagged with <a href="{% url 'ppa_detail' selected_ppa.id %}">{{ selected_ppa.name }}</a>. This is a community association, not a measured distance. <a href="{% url 'local_guides:home' %}">Clear PPA filter</a></p>{% endif %}
+    <form method="get" class="stack">
+        {{ form.non_field_errors }}{{ form.ppa.errors }}{{ form.ppa }}
+        <div class="cards">
+            {% include 'local_guides/_form_field.html' with field=form.kind %}
+            {% include 'local_guides/_form_field.html' with field=form.q %}
+            {% include 'local_guides/_form_field.html' with field=form.state %}
+            {% include 'local_guides/_form_field.html' with field=form.lga %}
+        </div>
+        <p id="location-feedback" class="field-hint" aria-live="polite">Choose a state to load its LGAs.</p>
+        <details {% if form.errors %}open{% endif %}>
+            <summary>Refine housing, fares or services</summary>
+            <div class="cards">
+                {% include 'local_guides/_form_field.html' with field=form.max_rent %}
+                {% include 'local_guides/_form_field.html' with field=form.price_period %}
+                {% include 'local_guides/_form_field.html' with field=form.room_type %}
+                {% include 'local_guides/_form_field.html' with field=form.amenity %}
+                {% include 'local_guides/_form_field.html' with field=form.mode %}
+                {% include 'local_guides/_form_field.html' with field=form.category %}
+            </div>
+            <p class="field-hint">Housing filters apply to accommodation, transport mode to fares, and service category to services. Choose a rent period when comparing reported prices.</p>
+        </details>
+        <div class="actions"><button type="submit">Find local guidance</button><a href="{% url 'local_guides:home' %}">Clear filters</a></div>
+    </form>
+</section>
+<section class="section">
+    <div class="section-heading"><h2>Current community reports</h2><span class="result-count">{{ page_obj.paginator.count }} results</span></div>
+    <p class="muted">Expired reports and accommodation reported unavailable are excluded. No account is needed to browse.</p>
+    <div class="cards">
+        {% for listing in listings %}{% include 'local_guides/_listing_card.html' %}{% empty %}
+        <p class="empty-state">No current reports match this area yet. Try fewer filters, or contribute information you know independently.</p>
+        {% endfor %}
+    </div>
+    {% include 'pagination.html' %}
+</section>
+<section class="section card">
+    <h2>Help the next corps member</h2>
+    <p>Contributions are reviewed before publication. Drafts remain private, and stronger verification requires separate evidence.</p>
+    <div class="actions">
+        <a class="button secondary" href="{% url 'local_guides:create' 'housing' %}">Share accommodation</a>
+        <a class="button secondary" href="{% url 'local_guides:create' 'fare' %}">Share a transport fare</a>
+        <a class="button secondary" href="{% url 'local_guides:create' 'service' %}">Share a local service</a>
+    </div>
+    {% if user.is_authenticated %}<p><a href="{% url 'local_guides:saved' %}">My housing watchlist and saved guidance</a> · <a href="{% url 'local_guides:mine' %}">My contributions</a> · <a href="{% url 'local_guides:reports' %}">My private reports</a></p>{% endif %}
+</section>
+{% endblock %}

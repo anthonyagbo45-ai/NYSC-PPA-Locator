@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Add{% endif %} discussion post · Local rooms{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">{{ room.title }}</p><h1>{% if editing %}Edit your discussion post{% else %}Add to the discussion{% endif %}</h1>
+    <p class="notice">{% if room.visibility == 'public' %}Anyone can read this public discussion, including visitors without an account.{% else %}Only approved room members can read this discussion.{% endif %} Do not share personal contacts, state codes, identity documents, exact private homes or live locations.</p>
+    {% if editing %}<p>Edits are kept in your private history. A hidden post stays hidden until a moderator reviews it.</p>{% endif %}
+    <form method="post" class="card stack">
+        {% csrf_token %}{{ form.non_field_errors }}{{ form.expected_version }}{{ form.expected_version.errors }}
+        {% for field in form.visible_fields %}{% include 'local_rooms/_field.html' %}{% endfor %}
+        <div class="actions"><button type="submit">{% if editing %}Save changes{% else %}Post discussion{% endif %}</button><a href="{% url 'local_rooms:room_detail' room.id %}">Back to room</a></div>
+    </form>
+</section>
+{% endblock %}

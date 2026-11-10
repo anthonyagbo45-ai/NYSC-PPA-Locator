@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="card section"><h1>Please check this information</h1><p role="alert">{{ error }}</p>{{ form.errors }}<p><a href="{% url 'search_ppa' %}">Return to search</a></p></section>{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}{{ room.title }} · Local rooms{% endblock %}
+{% block content %}
+<section class="hero">
+    {% include 'local_rooms/_links.html' %}
+    <div class="badges"><span class="badge">{{ room.visibility_label }}</span><span class="badge">{{ room.status_label }}</span></div>
+    <h1>{{ room.title }}</h1><p class="place-area">{{ room.lga_name }}, {{ room.state_name }}</p>
+    {{ room.description|linebreaks }}
+    {% if room.ppa_name %}<p>PPA context: <a href="{% url 'ppa_detail' room.ppa_id %}">{{ room.ppa_name }}</a></p>{% endif %}
+    {% if room.group_title %}<p>CDS context: {{ room.group_title }}</p>{% elif room.group_unavailable %}<p class="muted">The linked CDS resource is unavailable. It does not establish anyone's affiliation.</p>{% endif %}
+    <p class="notice">Community discussion is not an official NYSC decision. No member directory or personal contact details are provided.</p>
+    {% if room.status == 'paused' %}<p class="notice warning">This room is paused. Existing permitted discussion remains readable, but new posts and join requests are closed.</p>{% endif %}
+</section>
+{% if room.guidelines %}<section class="section card"><h2>Room guidelines</h2>{{ room.guidelines|linebreaks }}</section>{% endif %}
+<section class="section card" aria-label="Your room access">
+    <h2>Your room access</h2>
+    {% if room.my_membership %}
+        <p>Your membership: <strong>{{ room.my_membership.status_label }}</strong></p>
+        {% if room.my_membership.status == 'requested' %}<p>Your request is awaiting review. A request does not grant member-only access.</p>{% endif %}
+        {% if room.my_membership.status == 'banned' %}<p>Participation is restricted. A new join request is unavailable.</p>{% endif %}
+        {% if room.my_membership.status == 'approved' %}
+            <p>Your room notification choice: {% if room.my_membership.notifications_enabled %}enabled{% else %}off{% endif %}.</p>
+            {% if room.my_membership.notifications_enabled and not community_notifications_enabled %}<p class="notice">Delivery is paused because community notifications are off in <a href="{% url 'notifications:preferences' %}">My reminders</a>.</p>{% endif %}
+        {% endif %}
+    {% endif %}
+    {% if not room.can_read %}<p class="notice">Only public discovery information is shown here. Discussion text requires your explicitly approved room membership.</p>{% endif %}
+    <div class="actions">
+    {% if user.is_authenticated %}
+        {% if room.can_request_join %}<a class="button" href="{% url 'local_rooms:request_join' room.id %}">Request moderator approval</a>{% endif %}
+        {% if room.my_membership.status == 'approved' %}<a class="button secondary" href="{% url 'local_rooms:preferences' room.id %}">Notification choice</a>{% endif %}
+        {% if room.my_membership.status == 'approved' or room.my_membership.status == 'requested' %}<a href="{% url 'local_rooms:leave' room.id %}">Leave or cancel request</a>{% endif %}
+        <a href="{% url 'local_rooms:report_room' room.id %}">Report room privately</a>
+    {% elif room.can_request_join %}<a class="button" href="{% url 'login' %}?next={% url 'local_rooms:request_join' room.id %}">Sign in to request membership</a>{% endif %}
+    </div>
+</section>
+{% if room.can_read %}
+<section class="section">
+    <div class="section-heading"><h2>Discussion</h2>{% if room.can_post %}<a class="button" href="{% url 'local_rooms:post_add' room.id %}">Add a post</a>{% endif %}</div>
+    {% if not room.can_post and room.status == 'active' %}<p class="muted">Posting requires verified email and explicitly approved room membership, including in public rooms.</p>{% endif %}
+    <p class="field-hint">Blocking limits signed-in interactions. Public discussion remains available to visitors who are signed out.</p>
+    <div class="stack">
+    {% for post in posts %}
+        <article class="card" id="post-{{ post.id }}">
+            <p class="muted">{{ post.author_name }} · <time datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:'j M Y, H:i' }}</time>{% if post.is_owner %} · Your post{% endif %}</p>
+            <p><span class="badge">{{ post.status_label }}</span></p>
+            {{ post.body|linebreaks }}
+            {% if post.source_url %}<p><a href="{{ post.source_url }}" target="_blank" rel="nofollow noopener noreferrer">Public supporting reference (opens in a new tab)</a></p>{% endif %}
+            <div class="actions">
+                {% if post.can_edit %}<a href="{% url 'local_rooms:post_edit' post.id %}">Edit my post</a>{% endif %}
+                {% if post.is_owner %}<a href="{% url 'local_rooms:post_history' post.id %}">My edit history</a><a href="{% url 'local_rooms:post_archive' post.id %}">Withdraw my post</a>{% endif %}
+                {% if user.is_authenticated %}<a href="{% url 'local_rooms:report_post' post.id %}">Report post privately</a>{% endif %}
+            </div>
+            {% if user.is_authenticated and not post.is_owner %}<details><summary>Member safety tools</summary><form method="post" action="{% url 'community:block' %}">{% csrf_token %}<input type="hidden" name="target_type" value="room_post"><input type="hidden" name="target_id" value="{{ post.id }}"><p>Block interactions and notifications with this author. Public discussion remains readable while signed out.</p><button class="secondary">Block post author</button></form></details>{% endif %}
+        </article>
+    {% empty %}<p class="empty-state">No visible discussion posts yet.</p>{% endfor %}
+    </div>
+    {% include 'pagination.html' %}
+</section>
+{% endif %}
+{% endblock %}

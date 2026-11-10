@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ listing.title }} · Local living guide{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'local_guides:home' %}">Local living guide</a> / {{ listing.kind_label }}</p>
+<section class="section card">
+    {% if private_preview %}<p class="notice warning">Your private contribution preview · {{ listing.publication_label }}. Other members cannot read this page.</p>{% endif %}
+    <p class="eyebrow">{{ listing.kind_label }}</p><h1>{{ listing.title }}</h1>
+    <p class="place-area">{{ listing.area }} · {{ listing.lga_name }}, {{ listing.state_name }}</p>
+    {% if listing.ppa_id %}<p>Tagged with <a href="{% url 'ppa_detail' listing.ppa_id %}">{{ listing.ppa_name }}</a>. This association does not establish measured proximity or PPA endorsement.</p>{% endif %}
+    {% include 'local_guides/_freshness.html' %}
+    <p>{{ listing.summary|linebreaksbr }}</p>
+    {% if listing.kind == 'housing' %}
+        <h2>Reported accommodation details</h2>
+        <p><strong>{% if listing.housing.reported_rent != None %}₦{{ listing.housing.reported_rent|floatformat:2 }} {{ listing.housing.price_period_label|lower }}{% else %}Rent not reported{% endif %}</strong> · {{ listing.housing.room_type_label }}</p>
+        {% if listing.is_stale or not listing.is_available %}<p class="notice warning">Availability is not current. This is a historical report, not an available-room offer.</p>{% else %}<p>{{ listing.housing.availability_label }} on {{ listing.observed_on|date:"j M Y" }}. Availability and terms may have changed.</p>{% endif %}
+        {% if listing.housing.amenity_labels %}<p>Reported amenities: {{ listing.housing.amenity_labels|join:", " }}. Check these in person.</p>{% endif %}
+        <p class="muted">Contributor describes their role as {{ listing.housing.contributor_role_label|lower }}. A self-description or permission-to-share assertion does not verify property ownership.</p>
+        <div class="notice"><strong>Plan a safe viewing.</strong> Visit with someone you trust, check the property and the person's authority, and confirm all costs directly. PPA Locator collects no rent, deposits or fees and does not guarantee safety, ownership or availability. Only general housing areas are requested. Do not share exact private home addresses or personal contacts; report entries that contain them.</div>
+    {% elif listing.kind == 'fare' %}
+        <h2>Reported transport estimate</h2>
+        <p>{{ listing.fare.origin_area }} → {{ listing.fare.destination_area }}<br>{{ listing.fare.mode_label }} · <strong>₦{{ listing.fare.amount_low|floatformat:2 }}–₦{{ listing.fare.amount_high|floatformat:2 }}</strong> per person</p>
+        <p class="notice">Fares are community estimates observed on the date above, not live or guaranteed prices. Confirm with the operator, including route, time and any extra costs. No booking or payment is handled here.</p>
+    {% else %}
+        <h2>Reported service details</h2>
+        <p>{{ listing.service.category_label }}</p>
+        {% if listing.service.opening_hours %}<p>Reported hours: {{ listing.service.opening_hours }}</p>{% endif %}
+        {% if listing.service.public_business_address %}<p>Public business premise: {{ listing.service.public_business_address|linebreaksbr }}</p>{% endif %}
+        <p class="notice">Confirm current hours and service details directly. Publication and community reports do not establish NYSC endorsement or guarantee quality.</p>
+    {% endif %}
+    {% if listing.source_url %}<p><a href="{{ listing.source_url }}" target="_blank" rel="nofollow noopener noreferrer">Public supporting reference (external page)</a></p>{% endif %}
+    <p class="muted">Approval to publish is separate from independently checking the facts. An attributed official source provides context; it does not authorise posting, clearance or any NYSC decision.</p>
+    {% if user.is_authenticated and not private_preview %}
+    <div class="actions"><form method="post" action="{% url 'local_guides:bookmark' listing.id %}">{% csrf_token %}<button name="action" value="{% if is_saved %}remove{% else %}save{% endif %}">{% if is_saved %}Remove from my watchlist{% else %}Save to my watchlist{% endif %}</button></form>
+    <a class="button secondary" href="{% url 'local_guides:report' listing.id %}">Report a problem or correction</a></div>
+    {% elif not user.is_authenticated %}<p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to save or report this entry</a>. Browsing remains free.</p>{% endif %}
+    {% if own %}<p><a href="{% url 'local_guides:mine' %}">Manage my contributions</a> · <a href="{% url 'local_guides:history' listing.id %}">My private revision history</a></p>{% endif %}
+</section>
+{% endblock %}

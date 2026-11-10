@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    path('', include('ppas.community_urls')),
+    path('', include('ppas.profile_urls')),
+    path('', include('ppas.route_urls')),
+    path('places/preview/', views.discovered_place, name='discovered_place'),
     path('', views.landing, name='landing'),
     path('portal-entry/', views.portal_entry, name='portal_entry'),
     path('dashboard/', views.dashboard, name='dashboard'),  # <-- Ensure this line is here

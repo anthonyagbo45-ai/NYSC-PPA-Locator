@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Report local information · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Private correction or safety report</p><h1>Report {{ listing.title }}</h1>
+    <p>Your report goes privately to moderators. It does not automatically change the published information. Do not include passwords, state codes, bank details or anyone's exact private location.</p>
+    <form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include 'local_guides/_form_field.html' %}{% endfor %}<button type="submit">Send private report</button></form>
+    <p><a href="{% url 'local_guides:detail' listing.id %}">Back to the listing</a> · <a href="{% url 'local_guides:reports' %}">My reports</a></p>
+</section>
+{% endblock %}
