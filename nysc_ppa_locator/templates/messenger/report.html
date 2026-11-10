@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Report a private message | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="eyebrow">Private safety report</p><h1>Report this message</h1>
+  <p class="notice">Submitting shares this selected message's text, sending time and sender display name, together with your explanation, with separately authorised report reviewers. This does not give reviewers access to the rest of your conversation.</p>
+  <article class="card" aria-label="Selected message"><h2>Message included in your report</h2><p class="muted">{{ selectedmessage.sender_name }} · {{ selectedmessage.sent_at|date:'j M Y, H:i' }}</p><p>{{ selectedmessage.body|linebreaksbr }}</p></article>
+  <form method="post" class="card stack section">{% csrf_token %}{{ form.as_p }}
+    <p class="field-hint">Explain the concern without adding passwords, identity documents or unnecessary personal details. A report starts a review; it does not establish wrongdoing or automatically remove a member.</p>
+    <div class="actions"><button type="submit">Submit private report</button><a href="{% url 'messenger:thread' thread.id %}">Back to conversation</a></div>
+  </form>
+</section>
+{% endblock %}

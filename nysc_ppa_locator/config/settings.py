@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'community.apps.CommunityConfig',
     'local_rooms.apps.LocalRoomsConfig',
+    'messenger.apps.MessengerConfig',
 ]
 
 # Set the Custom User Model

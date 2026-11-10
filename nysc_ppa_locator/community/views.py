@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -64,6 +65,8 @@ def _blocked_ids(user, author_ids):
 def _public_question(item, request, blocked=None):
     result = services.safe_public_question(item, user=request.user)
     result['interaction_blocked'] = item.author_id in (blocked or set())
+    if request.user.is_authenticated and item.author_id and item.author_id != request.user.pk and not result['interaction_blocked']:
+        result['message_request_url'] = reverse('messenger:request_question', args=[item.pk])
     return result
 
 
@@ -137,6 +140,8 @@ def question_detail(request, pk):
     for answer in answer_rows:
         safe = services.safe_public_answer(answer, user=request.user)
         safe.update(has_voted=answer.pk in votes, interaction_blocked=answer.author_id in blocked or question.author_id in blocked)
+        if request.user.is_authenticated and answer.author_id and answer.author_id != request.user.pk and not safe['interaction_blocked']:
+            safe['message_request_url'] = reverse('messenger:request_answer', args=[answer.pk])
         safe_answers.append(safe)
     page.object_list = safe_answers
     page.paginator.object_list = safe_answers

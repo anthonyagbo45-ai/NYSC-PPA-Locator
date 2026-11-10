@@ -1,6 +1,7 @@
 <article class="card section" id="answer-{{ answer.id }}">
     <p class="eyebrow">Community answer</p><p>{{ answer.author_name }} · {{ answer.created_at|date:'j M Y' }}</p>
     <p>{{ answer.body|linebreaksbr }}</p>
+    {% if user.is_authenticated and answer.message_request_url and not answer.is_owner and not answer.interaction_blocked %}<p><a href="{{ answer.message_request_url }}">Request private chat with this author</a></p>{% endif %}
     {% if answer.source_url %}<p><a href="{{ answer.source_url }}" rel="nofollow noopener noreferrer" target="_blank">Public supporting reference (external page)</a></p>{% endif %}
     <p class="muted">{{ answer.helpful_count }} member{{ answer.helpful_count|pluralize }} found this helpful. Votes express community opinion.</p>
     {% if user.is_authenticated %}

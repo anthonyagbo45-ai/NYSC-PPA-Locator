@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Message preferences | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="eyebrow">Your choices</p><h1>Message preferences</h1>
+  <p>Message requests are off until you choose to enable them. Both people must enable requests and verify their email before a new conversation can begin.</p>
+  <form method="post" class="card stack">{% csrf_token %}{{ form.as_p }}
+    <p class="notice">Turning requests off closes pending requests in either direction. It does not close conversations you already accepted. You can close any conversation from its page.</p>
+    {% if not user.email_verified %}<p><a href="{% url 'email_verification' %}">Verify your email</a> before enabling requests. You can still turn requests off and use safety tools.</p>{% endif %}
+    <div class="actions"><button type="submit">Save message preferences</button><a href="{% url 'messenger:inbox' %}">Back to my messages</a></div>
+  </form>
+  <p>Accept a request before more messages can arrive. Declining or closing a conversation stops new messages and requests between that pair of accounts. A member block also stops messaging in both directions; the existing conversation remains available to its participants for reference and reporting.</p>
+  <p class="muted">Only display names are shown. Messages are stored on the service, not end-to-end encrypted. Do not send passwords, identity documents, bank details or precise live locations. There are no attachments, calls, typing indicators or read receipts.</p>
+</section>
+{% endblock %}

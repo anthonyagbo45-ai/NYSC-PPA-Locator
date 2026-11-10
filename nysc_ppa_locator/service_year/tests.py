@@ -227,11 +227,11 @@ class ServiceYearPrivacyTests(ServiceYearDataMixin, TestCase):
         self.assertContains(progress, 'does not grant posting, transfer, clearance or other NYSC approval')
         response = self.client.get(reverse('service_year_dashboard'))
         self.assertContains(response, 'planned for later checkpoints')
-        self.assertContains(response, 'Private messaging, photos, video calls and careers')
+        self.assertContains(response, 'Photos, video calls and careers')
         self.assertContains(response, reverse('community:home'))
         self.assertContains(response, reverse('local_rooms:home'))
         self.assertContains(response, reverse('community_notifications:inbox'))
-        self.assertNotContains(response, 'href="/messenger/')
+        self.assertContains(response, reverse('messenger:inbox'))
         self.assertNotContains(response, 'href="#"')
 
     def test_optional_profile_needs_no_backfill_and_only_edits_own_record(self):

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}My messages | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero">
+  <p class="eyebrow">Your private conversations</p><h1>My messages</h1>
+  <p>Keep useful conversations inside PPA Locator. You choose which message requests to accept. All member messaging is free.</p>
+  <div class="actions"><a class="button secondary" href="{% url 'messenger:preferences' %}">Message preferences</a><a href="{% url 'community:blocks' %}">My blocked accounts</a><a href="{% url 'messenger:inbox' %}">Refresh inbox</a></div>
+</header>
+<p class="notice">{% if preference.allow_requests %}<strong>Your message requests are enabled.</strong>{% else %}<strong>Your message requests are off.</strong> Enable requests in your preferences if you want to make a connection.{% endif %} Use Request private chat on a community question or answer to send an introduction. Both members need enabled requests and a verified email. There is no searchable member directory.</p>
+<section class="section" aria-labelledby="conversations-title">
+  <h2 id="conversations-title">Conversations and requests</h2>
+  <nav aria-label="Message folders" class="actions"><a href="?folder=all"{% if folder == 'all' %} aria-current="page"{% endif %}>All conversations</a><a href="?folder=pending"{% if folder == 'pending' %} aria-current="page"{% endif %}>Requests</a><a href="?folder=accepted"{% if folder == 'accepted' %} aria-current="page"{% endif %}>Accepted</a><a href="?folder=closed"{% if folder == 'closed' %} aria-current="page"{% endif %}>Ended</a></nav>
+  <div class="stack">
+    {% for row in rows %}
+    <article class="card">
+      <div class="section-heading"><h3><a href="{% url 'messenger:thread' row.id %}">{{ row.other_name }}</a></h3><span class="badge">{{ row.status_label }}</span></div>
+      {% if row.status == 'pending' %}<p>{% if row.is_incoming %}A new request is waiting for your choice. Read the introduction before accepting.{% else %}Your introduction is waiting for a response. More messages can be sent after acceptance.{% endif %}</p>{% endif %}
+      {% if row.unread %}<p><strong>Unread messages</strong></p>{% endif %}
+      <p class="muted">Updated {{ row.updated_at|date:'j M Y, H:i' }}</p>
+      <a class="button secondary" href="{% url 'messenger:thread' row.id %}">Open conversation</a>
+    </article>
+    {% empty %}<div class="empty-state"><h3>No conversations yet</h3><p>You can keep using the public community without enabling private messages. If you want to chat privately, start with your message preferences.</p><a href="{% url 'community:home' %}">Explore Corper Connect</a></div>{% endfor %}
+  </div>
+  {% include 'pagination.html' %}
+</section>
+<p class="muted">Messages are stored on the service and are not end-to-end encrypted. Your email, state code and full name are not shared by Messenger. Check this inbox for updates; no email, SMS or browser push is sent.</p>
+{% endblock %}

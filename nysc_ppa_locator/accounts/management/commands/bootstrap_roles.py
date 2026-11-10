@@ -32,6 +32,9 @@ ROOM_MODERATOR_PERMISSIONS = {
     'view_roompost', 'view_roompostrevision', 'view_roomreport', 'view_roomreportrevision',
 }
 
+MESSENGER_REVIEW_PERMISSIONS = {'can_review_message_reports'}
+MESSENGER_REVIEW_GROUP = 'MessengerSafetyReviewer'
+
 
 class Command(BaseCommand):
     help = 'Create least-privilege community roles. Does not grant membership, staff access or verification.'
@@ -49,11 +52,21 @@ class Command(BaseCommand):
         required |= {('service_resources', name) for name in RESOURCE_MODERATOR_PERMISSIONS}
         required |= {('community', name) for name in COMMUNITY_MODERATOR_PERMISSIONS}
         required |= {('local_rooms', name) for name in ROOM_MODERATOR_PERMISSIONS}
-        missing = required - set(permissions.values_list('content_type__app_label', 'codename'))
+        message_review_permissions = Permission.objects.filter(
+            content_type__app_label='messenger', codename__in=MESSENGER_REVIEW_PERMISSIONS,
+        )
+        required |= {('messenger', name) for name in MESSENGER_REVIEW_PERMISSIONS}
+        available = set(permissions.values_list('content_type__app_label', 'codename'))
+        available |= set(message_review_permissions.values_list('content_type__app_label', 'codename'))
+        missing = required - available
         if missing:
             raise CommandError('Run all migrations first; required moderation permissions are missing: ' + ', '.join(f'{app}.{name}' for app, name in sorted(missing)))
         moderator, _ = Group.objects.get_or_create(name='Moderator')
         moderator.permissions.set(permissions)
         vetted, _ = Group.objects.get_or_create(name='VettedContributor')
         vetted.permissions.clear()
+        # Private message evidence requires an independently assigned role.
+        # Ordinary public-content moderators never inherit this permission.
+        message_reviewer, _ = Group.objects.get_or_create(name=MESSENGER_REVIEW_GROUP)
+        message_reviewer.permissions.set(message_review_permissions)
         self.stdout.write(self.style.SUCCESS('Community roles ready. No accounts, staff flags or verification records changed.'))

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Private conversation | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="breadcrumb"><a href="{% url 'messenger:inbox' %}">My messages</a> / Conversation</p>
+  <div class="section-heading"><h1>{{ thread.other_name }}</h1><span class="badge">{{ thread.status_label }}</span></div>
+  <p class="muted">Only participants can open this conversation through the app. Read markers stay private. Messages are stored on the service and are not end-to-end encrypted.</p>
+  {% if thread.is_blocked %}<p class="notice">A member block prevents new messages. Your existing conversation remains available for reference and reporting.</p>
+  {% elif thread.status == 'pending' %}
+    {% if thread.is_incoming %}<p class="notice">This is a message request. Read the introduction and choose whether to accept. No further messages can be sent before acceptance.</p>{% else %}<p class="notice">Your request is waiting for a response. You can send another message after it is accepted.</p>{% endif %}
+  {% elif thread.status == 'declined' or thread.status == 'closed' %}<p class="notice">This conversation has ended. Its history remains available, but new messages and repeat requests are stopped.</p>{% endif %}
+  {% if thread.can_accept %}
+  <form method="post" action="{% url 'messenger:respond' thread.id %}" class="actions">{% csrf_token %}<button name="action" value="accept">Accept request</button><button class="secondary" name="action" value="decline">Decline request</button></form>
+  {% elif thread.status == 'pending' and thread.is_incoming %}
+  <form method="post" action="{% url 'messenger:respond' thread.id %}">{% csrf_token %}<button class="secondary" name="action" value="decline">Decline request</button></form>
+  {% endif %}
+  <div class="actions"><a href="{% url 'messenger:thread' thread.id %}">Refresh conversation</a>{% if older_url %}<a href="{{ older_url }}">Older messages</a>{% endif %}</div>
+  <ol class="list-none p-0 space-y-4" aria-label="Messages">
+    {% for message in message_rows %}
+    <li id="message-{{ message.id }}" class="min-w-0">
+      <article class="rounded-2xl border p-4 sm:p-5 {% if message.is_own %}border-emerald-200 bg-emerald-50{% else %}border-slate-200 bg-white{% endif %}">
+        <p class="muted">{% if message.is_own %}You{% else %}{{ message.sender_name }}{% endif %} · <time datetime="{{ message.sent_at|date:'c' }}">{{ message.sent_at|date:'j M Y, H:i' }}</time></p>
+        <p>{{ message.body|linebreaksbr }}</p>
+        {% if not message.is_own %}<p><a href="{% url 'messenger:report' thread.id message.id %}">Report this message privately</a></p>{% endif %}
+      </article>
+    </li>
+    {% empty %}<li class="empty-state">No messages are available.</li>{% endfor %}
+  </ol>
+  {% if latest_message_id %}<form method="post" action="{% url 'messenger:read' thread.id %}" class="actions">{% csrf_token %}<input type="hidden" name="message_id" value="{{ latest_message_id }}"><button class="secondary">Mark displayed messages read</button></form>{% endif %}
+  {% if thread.can_send %}
+  <section class="card section" aria-labelledby="compose-title"><h2 id="compose-title">Write a message</h2><form method="post" action="{% url 'messenger:send' thread.id %}" class="stack">{% csrf_token %}{{ form.as_p }}<p class="field-hint">Text only. Keep private documents, passwords, bank details and live locations out of messages. Links are shown as text.</p><button type="submit">Send message</button></form></section>
+  {% elif thread.status == 'accepted' and not thread.is_blocked %}<p class="notice">Sending is currently unavailable. Both accounts need to remain active with verified email addresses.</p>{% endif %}
+  <details><summary>Conversation safety tools</summary>
+    <p>Closing ends this conversation for both members and stops repeat requests. Blocking also prevents supported community interactions and alerts in either direction. Your conversation history remains available to you.</p>
+    {% if thread.status == 'pending' or thread.status == 'accepted' %}<form method="post" action="{% url 'messenger:close' thread.id %}" class="actions">{% csrf_token %}<button class="secondary">Close conversation</button></form>{% endif %}
+    {% if not thread.is_blocked %}<form method="post" action="{% url 'messenger:block' thread.id %}" class="actions">{% csrf_token %}<button class="secondary">Block this member</button></form>{% endif %}
+    <p><a href="{% url 'community:blocks' %}">Manage my blocked accounts</a> · <a href="{% url 'messenger:preferences' %}">Message preferences</a></p>
+  </details>
+</section>
+{% endblock %}

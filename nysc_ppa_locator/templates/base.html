@@ -18,6 +18,7 @@
 {% if user.is_authenticated %}
 <a href="{% url 'service_year_dashboard' %}">My Service Year</a>
 <a href="{% url 'notifications:home' %}">My reminders</a>
+<a href="{% url 'messenger:inbox' %}">My messages</a>
 <a href="{% url 'saved_ppas' %}">Saved places</a><a href="{% url 'my_reports' %}">My reports</a><a href="{% url 'profile' %}">My account</a>
 <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link-button">Sign out</button></form>
 {% else %}<a href="{% url 'login' %}">Sign in</a><a href="{% url 'register' %}">Join the community</a>{% endif %}

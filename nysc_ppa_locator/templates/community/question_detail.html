@@ -7,6 +7,7 @@
     <h1>{{ question.title }}</h1><p>{{ question.author_name }} · {{ question.created_at|date:'j M Y' }}</p>
     <p>{{ question.lga_name }}, {{ question.state_name }}{% if question.ppa_id %} · <a href="{% url 'ppa_detail' question.ppa_id %}">{{ question.ppa_name }}</a>{% endif %}{% if question.group_id %} · <a href="{% url 'service_resources:group_detail' question.group_id %}">{{ question.group_title }}</a>{% endif %}</p>
     <p>{{ question.body|linebreaksbr }}</p>
+    {% if user.is_authenticated and question.message_request_url and not question.is_owner and not question.interaction_blocked %}<p><a href="{{ question.message_request_url }}">Request private chat with this author</a></p>{% endif %}
     <p class="notice">Member suggestions and helpful votes are not official NYSC advice, verification or approval. Check current requirements with the responsible organisation.</p>
     {% if user.is_authenticated %}
         {% if question.interaction_blocked %}<p class="notice">A member block prevents interactions and notifications. This public discussion remains readable, including as a guest.</p>{% else %}

@@ -13,6 +13,7 @@ A free Django community platform for NYSC corps members: find a PPA, check commu
 - Corper Connect questions, answers, helpful reactions, resolution, private follows and contextual block/report tools.
 - Moderated local rooms with explicit admission, public or approved-member reading and immediate leave/access revocation.
 - Default-off in-app community alerts with current-access/version/block checks.
+- Free private text messaging with default-off requests, recipient acceptance, bilateral blocking and selected-message safety reports.
 - Account recovery, email verification, OTP-protected administration and scoped moderation.
 
 Publication approval is separate from independent verification. Community information and personal reminders do not grant NYSC posting, attendance or clearance approval. All ordinary member features are free.
@@ -137,4 +138,14 @@ python manage.py audit_freshness --json
 
 Run a reviewed periodic reminder command only after confirming consent, deployment scheduling and operational limits. Members can explicitly check their own reminders in the app. Administrators enroll OTP through regular sign-in; superusers deliberately grant staff/roles. Independent verification permissions are separate from publication moderation. Inspect the exact supporting material for any real notice; an official homepage alone does not verify a local date.
 
-Corper Connect is community advice, without official-answer badges or NYSC membership claims. Selecting a PPA or CDS reference never grants room admission. Public room text remains readable while signed out, including after an interaction block. Private one-to-one Messenger, photos, calls and careers remain later phases.
+Corper Connect is community advice, without official-answer badges or NYSC membership claims. Selecting a PPA or CDS reference never grants room admission. Public room text remains readable while signed out, including after an interaction block. Photos, calls and careers remain later phases.
+
+## Private messaging
+
+Message requests start off. Verified members can enable requests in My messages → Message preferences, then request a private chat with an author from a visible community question or answer. Both people must enable requests. Only one introduction is sent until acceptance; decline or closure stops repeat requests for the same pair. There is no member directory or recipient-identifier lookup.
+
+Conversation and inbox routes are participant-only, including for staff and superusers. Existing community blocks stop new messages in both directions and suppress unread markers; existing history remains available to its participants for reference and reporting. Disabling requests closes pending requests while preserving accepted conversations. Read markers are private; no email, SMS, push, read receipts, presence, typing indicators, attachments or calls are added. Members refresh the inbox or conversation to see new activity.
+
+Messages are stored on the service and are not end-to-end encrypted. Reporting explicitly shares the selected message's text, sending time and sender display name, plus the reporter's explanation, with separately authorised report reviewers. Report review does not allow browsing other conversation messages. Decisions retain an audit record. Do not register raw conversations or messages in the moderation admin, publish private message content or add it to offline caching/logs. Protect production database access, backups and retention/deletion processes before opening this feature to users.
+
+`bootstrap_roles` defines a separate `MessengerSafetyReviewer` role without assigning it to any account. A superuser must explicitly grant this role to an appropriate staff reviewer; report administration still requires enrolled OTP. The public-content Moderator role does not grant access to private message reports.

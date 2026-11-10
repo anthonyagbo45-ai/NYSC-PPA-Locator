@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Request a private chat | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="eyebrow">A conversation starts with a choice</p><h1>Request a private chat</h1>
+  {% if request_unavailable %}<p class="notice">{{ request_unavailable }} Both members need to enable requests in their preferences.</p>{% else %}
+  <p>Send a short introduction to <strong>{{ context.public_name }}</strong> about <a href="{{ context.context_url }}">{{ context.title }}</a>.</p>
+  <p class="notice">Your introduction will be visible to this member. They choose whether to accept it; you can send more messages only after they accept. Declined or closed conversations cannot be requested again.</p>
+  <form method="post" class="card stack">{% csrf_token %}{{ form.as_p }}
+    <p class="field-hint">Keep it relevant to the discussion. Your display name is shown, without your account email, full name or state code. Do not include private documents, passwords, payment details or another person's private information.</p>
+    <div class="actions"><button type="submit">Send message request</button><a href="{{ context.context_url }}">Back to discussion</a></div>
+  </form>
+  {% endif %}
+  <p><a href="{% url 'messenger:preferences' %}">Message preferences</a> · <a href="{% url 'messenger:inbox' %}">My messages</a></p>
+</section>
+{% endblock %}
