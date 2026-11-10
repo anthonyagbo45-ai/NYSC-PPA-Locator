@@ -1,0 +1,13 @@
+<article class="card section" id="answer-{{ answer.id }}">
+    <p class="eyebrow">Community answer</p><p>{{ answer.author_name }} · {{ answer.created_at|date:'j M Y' }}</p>
+    <p>{{ answer.body|linebreaksbr }}</p>
+    {% if answer.source_url %}<p><a href="{{ answer.source_url }}" rel="nofollow noopener noreferrer" target="_blank">Public supporting reference (external page)</a></p>{% endif %}
+    <p class="muted">{{ answer.helpful_count }} member{{ answer.helpful_count|pluralize }} found this helpful. Votes express community opinion.</p>
+    {% if user.is_authenticated %}
+        {% if answer.is_owner %}<div class="actions"><a href="{% url 'community:answer_edit' answer.id %}">Edit my answer</a><a href="{% url 'community:answer_history' answer.id %}">My private revision history</a><form method="post" action="{% url 'community:answer_archive' answer.id %}">{% csrf_token %}<button class="secondary">Archive my answer</button></form></div>
+        {% elif not answer.interaction_blocked %}<form method="post" action="{% url 'community:vote' answer.id %}">{% csrf_token %}<button class="secondary" name="value" value="{% if answer.has_voted %}0{% else %}1{% endif %}">{% if answer.has_voted %}Remove my helpful vote{% else %}This helped me{% endif %}</button></form>{% endif %}
+        {% if answer.interaction_blocked %}<p class="field-hint">A member block prevents interaction and notifications. Public content remains readable.</p>{% endif %}
+        <p><a href="{% url 'community:report_answer' answer.id %}">Report this answer privately</a></p>
+        {% if not answer.is_owner %}<details><summary>Member safety tools</summary><form method="post" action="{% url 'community:block' %}">{% csrf_token %}<input type="hidden" name="target_type" value="answer"><input type="hidden" name="target_id" value="{{ answer.id }}"><p>Block interactions and notifications with this answer's author. Public pages remain readable as a guest.</p><button class="secondary">Block answer author</button></form></details>{% endif %}
+    {% endif %}
+</article>

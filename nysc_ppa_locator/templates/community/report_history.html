@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}My private report history · Community{% endblock %}
+{% block content %}
+<section class="section"><h1>My private report history</h1><p>{{ report.category_label }} · {{ report.status_label }}</p><p>{{ report.details|linebreaksbr }}</p><p>Only report status changes are shown here. Private moderator evidence and identities are excluded.</p>
+{% for revision in revisions %}<article class="card section"><h2>{{ revision.previous_status }} → {{ revision.new_status }}</h2><p>{{ revision.created_at|date:'j M Y, H:i' }}</p></article>{% empty %}<p class="empty-state">No review status changes have been recorded yet.</p>{% endfor %}{% include 'pagination.html' %}<p><a href="{% url 'community:reports' %}">My private reports</a></p></section>
+{% endblock %}

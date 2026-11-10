@@ -10,6 +10,9 @@ A free Django community platform for NYSC corps members: find a PPA, check commu
 - Reviewed accommodation, transport estimates and local services with source and freshness labels.
 - Private budgets and dated expenses.
 - CDS/clearance resource workflows, private CDS preferences and opt-in in-app reminders.
+- Corper Connect questions, answers, helpful reactions, resolution, private follows and contextual block/report tools.
+- Moderated local rooms with explicit admission, public or approved-member reading and immediate leave/access revocation.
+- Default-off in-app community alerts with current-access/version/block checks.
 - Account recovery, email verification, OTP-protected administration and scoped moderation.
 
 Publication approval is separate from independent verification. Community information and personal reminders do not grant NYSC posting, attendance or clearance approval. All ordinary member features are free.
@@ -50,7 +53,7 @@ Run checks from the Django project directory:
 python -m pip check
 python manage.py check
 python manage.py makemigrations --check --dry-run
-python manage.py test accounts ppas service_year budgeting local_guides service_resources notifications config
+python manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config
 ```
 
 CI also exercises PostgreSQL 17 and Redis 7. Use disposable test services: tests clear their cache. Build styles with the locked dependencies rather than a runtime CDN. No React or separate frontend server is required.
@@ -92,12 +95,15 @@ Prefer a compatible prior application artifact for rollback while retaining addi
 
 ## Reminders and moderation
 
-Both global reminder choices start off; members also choose individual events or confirmed notices. Only current eligible versions produce in-app reminders. Source/group changes, expiry or opt-out suppress stale alerts. This release sends no SMS, email reminder or browser push and does not schedule a hosting-provider job automatically.
+All global delivery choices start off; members also choose individual events, confirmed notices, followed questions or approved rooms. Community delivery starts with future activity after both choices are enabled; old replies are never backfilled. Only current eligible versions produce in-app reminders. Source/group changes, expiry or opt-out suppress stale alerts. This release sends no SMS, email reminder or browser push and does not schedule a hosting-provider job automatically.
 
 ```bash
+python manage.py dispatch_community_notifications --dry-run --limit 1000
 python manage.py dispatch_reminders --dry-run --limit 1000
 python manage.py dispatch_reminders --limit 1000
 python manage.py audit_freshness --json
 ```
 
 Run a reviewed periodic reminder command only after confirming consent, deployment scheduling and operational limits. Members can explicitly check their own reminders in the app. Administrators enroll OTP through regular sign-in; superusers deliberately grant staff/roles. Independent verification permissions are separate from publication moderation. Inspect the exact supporting material for any real notice; an official homepage alone does not verify a local date.
+
+Corper Connect is community advice, without official-answer badges or NYSC membership claims. Selecting a PPA or CDS reference never grants room admission. Public room text remains readable while signed out, including after an interaction block. Private one-to-one Messenger, photos, calls and careers remain later phases.

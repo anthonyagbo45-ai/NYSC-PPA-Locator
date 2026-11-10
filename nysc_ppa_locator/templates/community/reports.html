@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}My private community reports · PPA Locator{% endblock %}
+{% block content %}
+<section class="section"><h1>My private community reports</h1><p>Your report details and submitted evidence are private. Moderator evidence and other reporters' information are not shown here.</p>
+{% for report in reports %}<article class="card section"><h2>{{ report.category_label }}</h2><p>{{ report.created_at|date:'j M Y' }} · {{ report.status_label }}</p><p>{{ report.details|linebreaksbr }}</p>{% if report.private_evidence %}<details><summary>My submitted private context</summary><p>{{ report.private_evidence|linebreaksbr }}</p></details>{% endif %}<p><a href="{% url 'community:report_history' report.id %}">My private report status history</a></p></article>{% empty %}<p class="empty-state">You have not submitted any community reports. Use the report link on a public question or answer if something needs review.</p>{% endfor %}{% include 'pagination.html' %}<p><a href="{% url 'community:home' %}">Community questions</a> · <a href="{% url 'community:blocks' %}">Member blocks</a></p></section>
+{% endblock %}

@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'local_guides.apps.LocalGuidesConfig',
     'service_resources.apps.ServiceResourcesConfig',
     'notifications.apps.NotificationsConfig',
+    'community.apps.CommunityConfig',
+    'local_rooms.apps.LocalRoomsConfig',
 ]
 
 # Set the Custom User Model

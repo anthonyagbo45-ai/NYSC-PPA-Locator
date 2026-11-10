@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}My community activity · PPA Locator{% endblock %}
+{% block content %}
+<section class="section"><h1>My community activity</h1><p>This page is private to your account. Your visible contributions remain public.</p>
+<p><a href="?kind=questions">My questions</a> · <a href="?kind=answers">My answers</a> · <a href="?kind=following">Following</a> · <a href="{% url 'community:reports' %}">Private reports</a> · <a href="{% url 'community:blocks' %}">Member blocks</a></p>
+{% for item in items %}<article class="section card">
+    {% if kind == 'answers' %}<h2>My answer</h2><p>{{ item.body|truncatechars:300 }}</p><p>{{ item.status_label }}</p><div class="actions">{% if item.status != 'archived' %}<a href="{% url 'community:answer_edit' item.id %}">Edit answer</a><form method="post" action="{% url 'community:answer_archive' item.id %}">{% csrf_token %}<button class="secondary">Archive answer</button></form>{% endif %}<a href="{% url 'community:answer_history' item.id %}">Private history</a>{% if item.question_visible %}<a href="{% url 'community:question_detail' item.question_id %}">Read public discussion</a>{% endif %}</div>
+    {% else %}<h2>{% if item.status == 'visible' %}<a href="{% url 'community:question_detail' item.id %}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</h2><p>{{ item.body|truncatechars:300 }}</p><p>{{ item.status_label }}{% if item.resolved %} · Resolved by the author{% endif %}</p>
+    {% if kind == 'questions' %}<div class="actions">{% if item.status != 'archived' %}<a href="{% url 'community:question_edit' item.id %}">Edit question</a><form method="post" action="{% url 'community:question_archive' item.id %}">{% csrf_token %}<button class="secondary">Archive question</button></form>{% endif %}<a href="{% url 'community:question_history' item.id %}">Private history</a></div>{% endif %}{% endif %}
+</article>{% empty %}<p class="empty-state">No {{ kind }} yet. <a href="{% url 'community:home' %}">Browse community questions</a> to get started.</p>{% endfor %}{% include 'pagination.html' %}</section>
+{% endblock %}

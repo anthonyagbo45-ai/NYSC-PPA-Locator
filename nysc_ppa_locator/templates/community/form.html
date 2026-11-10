@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Write{% endif %} {{ content_type }} · Community{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">Community contribution</p><h1>{% if editing %}Edit your {{ content_type }}{% elif content_type == 'question' %}Ask a question{% else %}Share an answer{% endif %}</h1>
+    {% if question %}<p>Answering <a href="{% url 'community:question_detail' question.id %}">{{ question.title }}</a></p>{% endif %}
+    <p class="notice">Your contribution is public. Share useful general context without private contacts, state codes, identity documents, private addresses or sensitive personal information. Community suggestions and public references do not establish NYSC approval.</p>
+    {% if editing %}<p>Editing preserves any moderator restriction. Hidden content stays hidden until a moderator reviews it. Your revision history remains private to your account.</p>{% endif %}
+    <form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}
+        {% for field in form.hidden_fields %}{{ field.errors }}{{ field }}{% endfor %}
+        {% for field in form.visible_fields %}{% include 'community/_field.html' %}{% endfor %}
+        {% if content_type == 'question' %}<p id="location-feedback" class="field-hint" aria-live="polite">Choose a state to load its LGAs. Apply the area to load PPA and CDS choices; your other fields remain available.</p>{% endif %}
+        {% if content_type == 'question' %}<button type="submit" name="action" value="refresh" formnovalidate class="secondary">Load PPA and CDS choices for this area</button>{% endif %}
+        <button type="submit">{% if editing %}Save changes{% else %}Publish {{ content_type }}{% endif %}</button>
+    </form><p><a href="{% url 'community:home' %}">Browse community questions</a> · <a href="{% url 'community:my_activity' %}">My activity</a></p>
+</section>
+{% endblock %}

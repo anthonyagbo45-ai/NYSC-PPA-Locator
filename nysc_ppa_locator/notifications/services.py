@@ -110,10 +110,12 @@ def delete_event(user, event_id):
 
 
 @transaction.atomic
-def save_preferences(user, personal_reminders=False, notice_reminders=False):
+def save_preferences(user, personal_reminders=False, notice_reminders=False, community_replies=None):
     member = _lock_member(user)
     if not isinstance(personal_reminders, bool) or not isinstance(notice_reminders, bool):
         raise ValidationError('Choose valid reminder preferences.')
+    if community_replies is not None and not isinstance(community_replies, bool):
+        raise ValidationError('Choose valid community notification preferences.')
     preference = NotificationPreference.objects.select_for_update().filter(user=member).first() or NotificationPreference(user=member)
     now = timezone.now()
     if not personal_reminders:
@@ -122,6 +124,16 @@ def save_preferences(user, personal_reminders=False, notice_reminders=False):
         Notification.objects.filter(user=member, subscription__isnull=False, dismissed_at__isnull=True).update(dismissed_at=now)
     preference.personal_reminders = personal_reminders
     preference.notice_reminders = notice_reminders
+    # Legacy calendar callers do not change community consent. A genuine
+    # opt-in starts a new window, so enabling never backfills old replies.
+    if community_replies is not None:
+        if community_replies and not preference.community_replies:
+            preference.community_enabled_at = now
+        elif not community_replies:
+            from .models import CommunityNotification
+            CommunityNotification.objects.filter(user=member, dismissed_at__isnull=True).update(dismissed_at=now)
+            preference.community_enabled_at = None
+        preference.community_replies = community_replies
     preference.full_clean()
     preference.save()
     return preference

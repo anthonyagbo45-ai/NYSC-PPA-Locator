@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Private community report · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><h1>Report this {{ content_type }} privately</h1><p>Only your account and authorised moderators can review your report. Reports do not automatically remove content. Use member blocking to stop interactions and notifications; public pages remain readable.</p>{% if item.title %}<h2>{{ item.title }}</h2>{% endif %}<p>{{ item.body|truncatechars:300 }}</p>
+<form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include 'community/_field.html' %}{% endfor %}<button>Send private report</button></form><p><a href="{% url 'community:reports' %}">My private reports</a></p></section>
+{% endblock %}

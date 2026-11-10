@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}My rooms · PPA Locator{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">Your private membership choices</p><h1>My rooms</h1><p>Only your own requests and membership states appear here. Approved room membership is a community permission, not an official NYSC record.</p>{% include 'local_rooms/_links.html' %}</section>
+{% if not community_notifications_enabled %}<p class="notice">Room notification delivery is paused because community notifications are off. Your individual room choices are saved separately. <a href="{% url 'notifications:preferences' %}">Review community notifications in My reminders</a>.</p>{% endif %}
+<section class="section stack">
+{% for membership in memberships %}
+    <article class="card">
+        <h2>{{ membership.room_title }}</h2><p><span class="badge">{{ membership.status_label }}</span>{% if membership.room_status_label %} <span class="badge">Room: {{ membership.room_status_label }}</span>{% endif %}</p>
+        <p class="muted">Requested {{ membership.requested_at|date:'j M Y' }}{% if membership.reviewed_at %} · Reviewed {{ membership.reviewed_at|date:'j M Y' }}{% endif %}</p>
+        <p>Your room notification choice: {% if membership.notifications_enabled %}enabled{% else %}off{% endif %}.</p>
+        {% if membership.room_status != 'active' %}<p class="field-hint">New notifications are paused while this room is {{ membership.room_status_label|lower }}.</p>{% endif %}
+        {% if membership.status == 'banned' %}<p>Participation is restricted. New join requests are unavailable.</p>{% endif %}
+        <div class="actions">
+            {% if membership.room_status != 'archived' %}<a class="button secondary" href="{% url 'local_rooms:room_detail' membership.room_id %}">View room</a>{% endif %}
+            {% if membership.status == 'approved' %}<a href="{% url 'local_rooms:preferences' membership.room_id %}">Notification choice</a>{% endif %}
+            {% if membership.status == 'approved' or membership.status == 'requested' %}<a href="{% url 'local_rooms:leave' membership.room_id %}">Leave or cancel request</a>{% endif %}
+        </div>
+    </article>
+{% empty %}<p class="empty-state">You have not requested membership in any local rooms.</p>{% endfor %}
+{% include 'pagination.html' %}
+</section>
+{% endblock %}

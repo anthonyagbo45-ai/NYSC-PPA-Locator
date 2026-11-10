@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Reminder choices | PPA Locator{% endblock %}
 {% block content %}
-<header class="hero"><p class="eyebrow">Your choices</p><h1>Reminder preferences</h1><p>Choose whether reminders should appear in your private PPA Locator inbox. Both choices start off. You can turn them off whenever you want.</p></header>
-<section class="card section"><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<p class="notice">An enabled preference does not follow notices or enable all your events. Choose each event or confirmed notice separately. Turning a preference off hides those reminders without deleting your private calendar.</p><button type="submit">Save reminder choices</button></form></section>
-<p>No email, SMS, marketing messages or browser push are sent. Check your reminder inbox when using the app. Confirm official arrangements with your designated NYSC official.</p><div class="actions"><a href="{% url 'notifications:home' %}">My events</a><a href="{% url 'notifications:inbox' %}">My reminder inbox</a></div>
+<header class="hero"><p class="eyebrow">Your choices</p><h1>Reminder preferences</h1><p>Choose whether reminders and community alerts appear in your private PPA Locator inboxes. All choices start off. You can turn them off whenever you want.</p></header>
+<section class="card section"><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<p class="notice">Choose each event, confirmed notice, question or approved room separately. Enabling a preference does not follow anything automatically. Turning community alerts off dismisses existing alerts; turning them on again only permits new activity.</p><button type="submit">Save reminder choices</button></form></section>
+<p>No email, SMS, marketing messages or browser push are sent. Check your inboxes when using the app. Confirm official arrangements with your designated NYSC official.</p><div class="actions"><a href="{% url 'notifications:home' %}">My events</a><a href="{% url 'notifications:inbox' %}">My reminder inbox</a><a href="{% url 'community_notifications:inbox' %}">My community alerts</a></div>
 {% endblock %}

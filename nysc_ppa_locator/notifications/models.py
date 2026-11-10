@@ -83,6 +83,8 @@ class NotificationPreference(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reminder_preferences')
     personal_reminders = models.BooleanField(default=False)
     notice_reminders = models.BooleanField(default=False)
+    community_replies = models.BooleanField(default=False)
+    community_enabled_at = models.DateTimeField(null=True, blank=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -140,3 +142,8 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'Private in-app reminder #{self.pk or "new"}'
+
+
+# Community deliveries have separate targets and constraints. Keep the existing
+# calendar reminder's exactly-one Event/NoticeSubscription constraint intact.
+from .community_models import CommunityActivity, CommunityNotification  # noqa: E402,F401

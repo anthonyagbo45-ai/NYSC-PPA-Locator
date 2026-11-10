@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}{{ question.title }} · Community questions{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'community:home' %}">Community questions</a> / {{ question.category_label }}</p>
+<article class="section card">
+    <p class="eyebrow">{{ question.category_label }}{% if question.resolved %} · Resolved by the author{% endif %}</p>
+    <h1>{{ question.title }}</h1><p>{{ question.author_name }} · {{ question.created_at|date:'j M Y' }}</p>
+    <p>{{ question.lga_name }}, {{ question.state_name }}{% if question.ppa_id %} · <a href="{% url 'ppa_detail' question.ppa_id %}">{{ question.ppa_name }}</a>{% endif %}{% if question.group_id %} · <a href="{% url 'service_resources:group_detail' question.group_id %}">{{ question.group_title }}</a>{% endif %}</p>
+    <p>{{ question.body|linebreaksbr }}</p>
+    <p class="notice">Member suggestions and helpful votes are not official NYSC advice, verification or approval. Check current requirements with the responsible organisation.</p>
+    {% if user.is_authenticated %}
+        {% if question.interaction_blocked %}<p class="notice">A member block prevents interactions and notifications. This public discussion remains readable, including as a guest.</p>{% else %}
+        <div class="actions"><a class="button" href="{% url 'community:answer_add' question.id %}">Write an answer</a></div>
+        <form method="post" action="{% url 'community:follow' question.id %}" class="stack">{% csrf_token %}
+            <label><input type="checkbox" name="enabled" {% if follow_enabled %}checked{% endif %}> Notify me about new answers to this question</label>{% if not global_notifications_enabled %}<p class="field-hint">Community notifications are paused in your <a href="{% url 'notifications:preferences' %}">reminder preferences</a>. You can save this choice now; delivery needs both this choice and the global community preference. Following is silent by default.</p>{% endif %}
+            <div class="actions"><button name="action" value="follow" class="secondary">{% if following %}Save my follow preferences{% else %}Follow privately{% endif %}</button>{% if following %}<button name="action" value="unfollow" class="secondary">Unfollow</button>{% endif %}</div>
+        </form>{% endif %}
+        <p><a href="{% url 'community:report_question' question.id %}">Report this question privately</a></p>
+        {% if question.is_owner %}
+        <div class="actions"><a href="{% url 'community:question_edit' question.id %}">Edit my question</a><a href="{% url 'community:question_history' question.id %}">My private revision history</a>
+        <form method="post" action="{% url 'community:question_resolve' question.id %}">{% csrf_token %}<button class="secondary" name="value" value="{% if question.resolved %}0{% else %}1{% endif %}">{% if question.resolved %}Reopen question{% else %}Mark resolved{% endif %}</button></form>
+        <form method="post" action="{% url 'community:question_archive' question.id %}">{% csrf_token %}<button class="secondary">Archive my question</button></form></div>
+        {% else %}<details><summary>Member safety tools</summary><form method="post" action="{% url 'community:block' %}">{% csrf_token %}<input type="hidden" name="target_type" value="question"><input type="hidden" name="target_id" value="{{ question.id }}"><p>Block interactions and notifications with this question's author. Public pages remain readable as a guest.</p><button class="secondary">Block question author</button></form></details>{% endif %}
+    {% else %}<p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in</a> to answer, follow or report. A verified email is needed to contribute.</p>{% endif %}
+</article>
+<section class="section" aria-label="Answers">
+    <h2>{{ page_obj.paginator.count }} community answer{{ page_obj.paginator.count|pluralize }}</h2>
+    {% for answer in answers %}{% include 'community/_answer.html' %}{% empty %}<p class="empty-state">There are no public answers yet. Share what you know and a public reference where useful.</p>{% endfor %}
+    {% include 'pagination.html' %}
+</section>
+{% endblock %}

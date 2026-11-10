@@ -4,6 +4,7 @@
 {% block content %}
 <p><a href="{% url 'search_ppa' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}">← Back to this LGA</a></p>
 <p><a href="{% url 'local_guides:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Housing, transport and services around this PPA</a></p>
+<p><a href="{% url 'community:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Questions about this PPA</a> · <a href="{% url 'local_rooms:home' %}?state={{ ppa.state_id }}&amp;lga={{ ppa.lga_id }}&amp;ppa={{ ppa.pk }}">Local discussion rooms</a></p>
 <div class="place-layout"><article class="card section place-information"><div class="badges"><span class="badge {{ ppa.status }}">{{ ppa.get_status_display }}</span><span class="badge">{{ ppa.get_source_display }}</span></div>
 <h1>{{ ppa.name }}</h1><p>{{ ppa.address }}</p><p><strong>{{ ppa.lga.name }}, {{ ppa.state.name }}</strong></p><button type="button" class="mobile-directions-trigger" data-open-directions aria-haspopup="dialog" aria-controls="route-dialog">Get directions</button>
 <p class="muted">{{ confirmation_total }} member confirmation{{ confirmation_total|pluralize }}{% if ppa.last_confirmed_at %} · Last confirmed {{ ppa.last_confirmed_at|date:'j M Y' }}{% endif %}</p>

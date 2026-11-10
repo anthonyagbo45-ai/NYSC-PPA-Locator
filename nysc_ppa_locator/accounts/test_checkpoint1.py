@@ -22,7 +22,10 @@ from .admin import AccountAdminForm, AccountCreationForm
 from .forms import ProfileForm
 from .logging import SensitiveDataFilter
 from .mail import verification_token
-from .management.commands.bootstrap_roles import MODERATOR_PERMISSIONS, LOCAL_MODERATOR_PERMISSIONS, RESOURCE_MODERATOR_PERMISSIONS
+from .management.commands.bootstrap_roles import (
+    MODERATOR_PERMISSIONS, LOCAL_MODERATOR_PERMISSIONS, RESOURCE_MODERATOR_PERMISSIONS,
+    COMMUNITY_MODERATOR_PERMISSIONS, ROOM_MODERATOR_PERMISSIONS,
+)
 from .models import ContributorVerification
 
 
@@ -320,7 +323,9 @@ class OperatorPermissionTests(TestCase):
         moderator = Group.objects.get(name='Moderator')
         self.assertEqual(set(moderator.permissions.values_list('content_type__app_label', 'codename')),
                          {('ppas', name) for name in MODERATOR_PERMISSIONS} | {('local_guides', name) for name in LOCAL_MODERATOR_PERMISSIONS}
-                         | {('service_resources', name) for name in RESOURCE_MODERATOR_PERMISSIONS})
+                         | {('service_resources', name) for name in RESOURCE_MODERATOR_PERMISSIONS}
+                         | {('community', name) for name in COMMUNITY_MODERATOR_PERMISSIONS}
+                         | {('local_rooms', name) for name in ROOM_MODERATOR_PERMISSIONS})
         self.assertFalse(moderator.permissions.filter(codename__in=['can_verify_organisations', 'can_verify_listings', 'can_verify_resources', 'change_ppa', 'change_corpmember', 'change_group']).exists())
         self.assertFalse(Group.objects.get(name='VettedContributor').permissions.exists())
         self.assertFalse(self.member.groups.exists())

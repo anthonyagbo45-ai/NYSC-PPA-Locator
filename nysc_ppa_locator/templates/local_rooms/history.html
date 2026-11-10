@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}My post history · Local rooms{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">Private edit history · {{ room.title }}</p><h1>My discussion post history</h1><p>Only your own post history appears here while you retain access to this room. Moderator evidence is excluded.</p><a href="{% url 'local_rooms:room_detail' room.id %}">Back to room</a></section>
+<section class="section stack">
+{% for revision in revisions %}
+    <article class="card"><h2>Version {{ revision.snapshot.version }}</h2><p><span class="badge">{{ revision.status_label }}</span></p><p class="muted">{{ revision.created_at|date:'j M Y, H:i' }} · {{ revision.reason }}</p>
+        {{ revision.snapshot.body|linebreaks }}
+        {% if revision.snapshot.source_url %}<p><a href="{{ revision.snapshot.source_url }}" target="_blank" rel="nofollow noopener noreferrer">Saved public reference (opens in a new tab)</a></p>{% endif %}
+    </article>
+{% empty %}<p class="empty-state">No saved revisions yet.</p>{% endfor %}
+{% include 'pagination.html' %}
+</section>
+{% endblock %}

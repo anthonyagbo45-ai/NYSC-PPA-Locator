@@ -53,7 +53,7 @@ jobs:
           "$RUNNER_TEMP/locator-venv/bin/python" -m pip check
           "$RUNNER_TEMP/locator-venv/bin/python" manage.py check
           "$RUNNER_TEMP/locator-venv/bin/python" manage.py makemigrations --check --dry-run
-          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources notifications config --verbosity 2
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config --verbosity 2
 
   postgres-redis:
     runs-on: ubuntu-latest
@@ -129,4 +129,4 @@ jobs:
           "$RUNNER_TEMP/locator-venv/bin/python" manage.py check
           "$RUNNER_TEMP/locator-venv/bin/python" manage.py makemigrations --check --dry-run
           "$RUNNER_TEMP/locator-venv/bin/python" manage.py migrate --noinput
-          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources notifications config --verbosity 2
+          "$RUNNER_TEMP/locator-venv/bin/python" manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config --verbosity 2

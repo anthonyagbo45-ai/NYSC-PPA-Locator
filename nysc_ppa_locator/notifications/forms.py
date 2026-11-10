@@ -50,6 +50,7 @@ class EventForm(forms.Form):
 class PreferenceForm(forms.Form):
     personal_reminders = forms.BooleanField(required=False, label='Show in-app reminders for my own events.', help_text='Only events you separately enable are included.')
     notice_reminders = forms.BooleanField(required=False, label='Show in-app reminders for confirmed notices I explicitly follow.', help_text='Unconfirmed community reports never create notice reminders. New or changed notices require your choice.')
+    community_replies = forms.BooleanField(required=False, label='Show in-app alerts for questions and local rooms I choose to follow.', help_text='Choose each question or approved room separately. Only new replies after both choices are enabled can appear. These are community suggestions, not confirmed notices.')
 
 
 class ConfirmEventDeleteForm(forms.Form):

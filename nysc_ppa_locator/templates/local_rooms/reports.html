@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}My private room reports · PPA Locator{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">Private to you and moderators</p><h1>My room reports</h1><p>Review the reports you submitted and their current moderation state. Private evidence and other members' reports are excluded.</p>{% include 'local_rooms/_links.html' %}</section>
+<section class="section stack">
+{% for report in reports %}
+    <article class="card"><h2>{{ report.category_label }}</h2><p><span class="badge">{{ report.status_label }}</span></p>
+        <p class="muted">{% if report.post_id %}Discussion post report{% else %}Room report{% endif %} · {{ report.created_at|date:'j M Y, H:i' }}</p>
+        {{ report.details|linebreaks }}
+    </article>
+{% empty %}<p class="empty-state">You have not submitted any room reports.</p>{% endfor %}
+{% include 'pagination.html' %}
+</section>
+{% endblock %}

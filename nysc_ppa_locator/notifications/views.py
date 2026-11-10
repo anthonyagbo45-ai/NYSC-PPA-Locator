@@ -57,6 +57,7 @@ def _preference_values(user):
     return {
         'personal_reminders': bool(preference and preference.personal_reminders),
         'notice_reminders': bool(preference and preference.notice_reminders),
+        'community_replies': bool(preference and preference.community_replies),
     }
 
 

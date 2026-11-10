@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}My private revision history · Community{% endblock %}
+{% block content %}
+<section class="section"><h1>My private {{ content_type }} revision history</h1><p>These are your saved versions. Private moderator evidence and other members' information are not included.</p>
+{% for revision in revisions %}<article class="card section"><h2>Version {{ revision.snapshot.version }}</h2><p>{{ revision.created_at|date:'j M Y, H:i' }}</p>{% if revision.snapshot.title %}<h3>{{ revision.snapshot.title }}</h3>{% endif %}<p>{{ revision.snapshot.body|linebreaksbr }}</p>{% if revision.snapshot.source_url %}<p>{{ revision.snapshot.source_url }}</p>{% endif %}<p>Status: {{ revision.snapshot.status }}{% if revision.snapshot.resolved %} · Resolved{% endif %}</p></article>{% empty %}<p class="empty-state">No saved revisions are available yet.</p>{% endfor %}{% include 'pagination.html' %}<p><a href="{% url 'community:my_activity' %}">My community activity</a></p></section>
+{% endblock %}

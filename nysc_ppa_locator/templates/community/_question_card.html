@@ -1,0 +1,7 @@
+<article class="card">
+    <p class="eyebrow">{{ question.category_label }}{% if question.resolved %} · Resolved by the author{% endif %}</p>
+    <h3><a href="{% url 'community:question_detail' question.id %}">{{ question.title }}</a></h3>
+    <p>{{ question.lga_name }}, {{ question.state_name }} · {{ question.author_name }}</p>
+    <p>{{ question.body|truncatechars:200 }}</p>
+    <p class="muted">{{ question.answer_count }} answer{{ question.answer_count|pluralize }} · {{ question.created_at|date:'j M Y' }}</p>
+</article>
