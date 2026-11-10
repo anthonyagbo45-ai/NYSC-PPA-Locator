@@ -53,7 +53,7 @@ Run checks from the Django project directory:
 python -m pip check
 python manage.py check
 python manage.py makemigrations --check --dry-run
-python manage.py test accounts ppas service_year budgeting local_guides service_resources community local_rooms notifications config
+python manage.py test accounts locations ppas service_year budgeting local_guides service_resources community local_rooms notifications config
 ```
 
 CI also exercises PostgreSQL 17 and Redis 7. Use disposable test services: tests clear their cache. Build styles with the locked dependencies rather than a runtime CDN. No React or separate frontend server is required.
@@ -92,6 +92,37 @@ With the repository root as the verified deployment context:
 Build installs locked frontend/Python dependencies and collects static assets without running migrations. Release applies additive migrations once, bootstraps role definitions without assigning users/staff/verifiers and runs deployment checks. WhiteNoise serves collected hashed/compressed assets. Do not run migrations independently in each worker. Confirm actual host/TLS/proxy/static settings and preserve existing records before enabling a new artifact.
 
 Prefer a compatible prior application artifact for rollback while retaining additive schema and protected current configuration. Do not drop new history tables or restore a stale database over newer member writes.
+
+## Fresh Render installation
+
+Use this path only when deliberately starting with a new empty database. It keeps the upgraded application and imports no previous accounts, PPAs, reviews or recovery captures. Existing members will need to register again. Keep any older backup separately.
+
+1. Create a persistent PostgreSQL database and a Redis-compatible Key Value service in the same region as the web service. Review their current prices, retention and expiry conditions. A provider's temporary/free database is not a permanent backup strategy. Member features remain free regardless of the operator's hosting plan.
+2. Configure the existing Python web service for `main`, repository Root Directory blank, Node 22+ and Python 3.12+. Set `DEBUG=False`, a new strong `DJANGO_SECRET_KEY`, exact `ALLOWED_HOSTS=nysc-ppa-locator.onrender.com`, `CSRF_TRUSTED_ORIGINS=https://nysc-ppa-locator.onrender.com`, and `TRUST_PROXY_HTTPS=True` only for the trusted Render HTTPS ingress.
+3. Enter the new database's individual `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT` and the cache's `REDIS_URL` in Render's protected environment. `DATABASE_URL` alone is not consumed. PostgreSQL TLS defaults to `verify-full`; use the provider's supported hostname/CA rather than disabling verification to bypass an error.
+4. For the first setup, set `PPA_INITIALIZE_LOCATIONS=True` and `PPA_BOOTSTRAP_ADMIN=True`. Enter `PPA_ADMIN_STATE_CODE`, `PPA_ADMIN_EMAIL`, `PPA_ADMIN_FULL_NAME` and a unique `PPA_ADMIN_PASSWORD` of at least 12 characters. These are operator-controlled deployment values, never public registration options or values to commit/share in chat.
+
+With a supported pre-deploy hook, retain the separate build/release commands above. On a service without a pre-deploy hook or shell, the explicit fresh-install Build Command can run them sequentially:
+
+```bash
+bash nysc_ppa_locator/build.sh && bash nysc_ppa_locator/release.sh
+```
+
+The Start Command remains:
+
+```bash
+cd nysc_ppa_locator && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 30
+```
+
+Set the health-check path to `/health/`. The combined build/release command performs database changes before a new runtime starts; bind it only to the intended main service and database, not preview/test builds. Future releases require protected backups and backward-compatible migrations. Do not place migrations in each worker's startup path.
+
+The explicit location command creates only 36 states plus FCT and 774 LGA/area-council reference choices. It does not seed demo PPAs or members. The bundled lists are application reference data, not an independently verified official registry. Existing exact reference rows retain their IDs on reruns; differing existing location data is rejected without alteration. Legacy `seed_locations` and `populate_states` commands now share this initializer.
+
+The administrator command creates a single operator only when the user table is empty. A matching existing active staff superuser is preserved on reruns, including after members join. Existing members are never promoted, credentials/verification are never reset, and conflicting identities stop the command. PostgreSQL serializes first-setup operations. No schema migration or public administrator-registration endpoint is added.
+
+After a successful deployment, sign in at `/login/` using the configured administrator **state code and app password**. Open `/account/mfa/setup/`, enroll an authenticator and privately save the recovery codes; then enter `/admin/`. Email remains unverified until the ordinary verification flow is completed. Confirm `/health/`, empty PPA/community directories and registration with the seeded locality choices. Remove the four `PPA_ADMIN_*` values and set both setup flags to `False` after initialization; subsequent releases retain the administrator and reference records.
+
+Configure and test real email delivery before opening member contributions/recovery to users. If the hosting plan restricts SMTP, use a compatible HTTPS delivery backend or a hosting plan that supports the configured mail transport; an in-memory or console backend is not production delivery. Configure the separately restricted Google keys for discovery, embedded maps and optional route estimates. These external providers, actual Render networking/TLS and deployment remain hosting checks, not outcomes of local tests.
 
 ## Reminders and moderation
 
