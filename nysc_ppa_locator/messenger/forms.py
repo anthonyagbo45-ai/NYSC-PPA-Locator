@@ -12,6 +12,10 @@ class PreferenceForm(forms.Form):
         label='Allow private message requests from community discussions',
         help_text='Off by default. Turning this off closes pending requests; accepted chats stay open until you close or block them.',
     )
+    allow_photos = forms.BooleanField(
+        required=False, label='Allow photos in accepted private conversations',
+        help_text='Off by default. Both members must enable this. Turning it off stops new photos; earlier photos remain in conversation history.',
+    )
 
 
 class MessageForm(forms.Form):

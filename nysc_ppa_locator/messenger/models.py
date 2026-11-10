@@ -12,6 +12,7 @@ from community.models import ProtectedAudit
 class MessengerPreference(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='messenger_preference')
     allow_requests = models.BooleanField(default=False)
+    allow_photos = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

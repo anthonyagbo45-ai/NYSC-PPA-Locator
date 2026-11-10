@@ -2,6 +2,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -42,6 +43,8 @@ def _thread_response(request, conversation_id, *, form=None, status=200):
     conversation = dict(result['conversation'])
     conversation['is_incoming'] = not conversation['is_initiator']
     conversation['is_blocked'] = conversation['blocked']
+    from photos.services import photo_send_enabled
+    conversation['can_send_photo'] = photo_send_enabled(request.user, conversation_id)
     rows = [dict(row, is_own=row['is_mine']) for row in result['messages']]
     older_url = None
     if result['next_before']:
@@ -50,6 +53,7 @@ def _thread_response(request, conversation_id, *, form=None, status=200):
         'thread': conversation, 'message_rows': rows,
         'form': form if form is not None else MessageForm(),
         'older_url': older_url, 'latest_message_id': result['last_message_id'],
+        'show_photo_previews': services.get_preferences(request.user).get('allow_photos', False),
     }, status=status)
 
 
@@ -77,7 +81,7 @@ def preferences(request):
     form = PreferenceForm(request.POST if request.method == 'POST' else None, initial=initial)
     if request.method == 'POST' and form.is_valid():
         try:
-            services.save_preferences(request.user, form.cleaned_data['allow_requests'])
+            services.save_preferences(request.user, form.cleaned_data['allow_requests'], allow_photos=form.cleaned_data['allow_photos'])
         except ValidationError as error:
             _errors(form, error)
         else:
@@ -194,6 +198,7 @@ def block(request, conversation_id):
     return redirect('messenger:thread', conversation_id=conversation_id)
 
 
+@transaction.non_atomic_requests
 @login_required
 @never_cache
 @require_http_methods(['GET', 'POST'])

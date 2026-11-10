@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'community.apps.CommunityConfig',
     'local_rooms.apps.LocalRoomsConfig',
     'messenger.apps.MessengerConfig',
+    'photos.apps.PhotosConfig',
 ]
 
 # Set the Custom User Model
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'photos.uploads.PhotoUploadLimitMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',  # CSRF Protection
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_otp.middleware.OTPMiddleware',
@@ -229,6 +231,8 @@ STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG else 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
 }
+from photos.configuration import private_photo_configuration as _private_photo_configuration
+PPA_PHOTOS_ENABLED, STORAGES['photos'] = _private_photo_configuration(debug=DEBUG, base_dir=BASE_DIR)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

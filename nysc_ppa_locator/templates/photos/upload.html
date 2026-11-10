@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Share a private photo | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+  <p class="breadcrumb"><a href="{% url 'messenger:inbox' %}">My messages</a> / <a href="{% url 'messenger:thread' thread.id %}">Conversation</a></p>
+  <p class="eyebrow">Accepted private conversation</p><h1>Share a photo</h1>
+  <p>Send one photo to <strong>{{ thread.other_name }}</strong> with a short description. Both members must allow photos in Message preferences.</p>
+  <p class="notice">Share only a photo you took or have permission to share. Keep identity documents, passwords, bank details, precise live locations and other people's private information out of the picture and its description.</p>
+  <form method="post" enctype="multipart/form-data" class="card stack">{% csrf_token %}{{ form.as_p }}
+    <p class="field-hint">Choose one still JPEG, PNG or WebP photo, up to 8 MiB. Add a useful description for someone who cannot see the image. Location metadata is removed, but details visible in the picture remain visible.</p>
+    <div class="actions"><button type="submit">Send private photo</button><a href="{% url 'messenger:thread' thread.id %}">Back to conversation</a></div>
+  </form>
+  <p class="muted">Photos stay inside this conversation through the app and are not saved for offline use. Messages and photos are stored on the service and are not end-to-end encrypted. A participant can share a selected photo with authorised safety reviewers by reporting it.</p>
+  <p><a href="{% url 'messenger:preferences' %}">Message and photo preferences</a></p>
+</section>
+{% endblock %}

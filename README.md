@@ -13,7 +13,7 @@ A free Django community platform for NYSC corps members: find a PPA, check commu
 - Corper Connect questions, answers, helpful reactions, resolution, private follows and contextual block/report tools.
 - Moderated local rooms with explicit admission, public or approved-member reading and immediate leave/access revocation.
 - Default-off in-app community alerts with current-access/version/block checks.
-- Free private text messaging with default-off requests, recipient acceptance, bilateral blocking and selected-message safety reports.
+- Free private messaging with default-off requests, recipient acceptance, optional photos in accepted conversations, bilateral blocking and selected-message safety reports.
 - Account recovery, email verification, OTP-protected administration and scoped moderation.
 
 Publication approval is separate from independent verification. Community information and personal reminders do not grant NYSC posting, attendance or clearance approval. All ordinary member features are free.
@@ -54,7 +54,7 @@ Run checks from the Django project directory:
 python -m pip check
 python manage.py check
 python manage.py makemigrations --check --dry-run
-python manage.py test accounts locations ppas service_year budgeting local_guides service_resources community local_rooms notifications config
+python manage.py test accounts locations ppas service_year budgeting local_guides service_resources community local_rooms messenger photos notifications config
 ```
 
 CI also exercises PostgreSQL 17 and Redis 7. Use disposable test services: tests clear their cache. Build styles with the locked dependencies rather than a runtime CDN. No React or separate frontend server is required.
@@ -138,14 +138,40 @@ python manage.py audit_freshness --json
 
 Run a reviewed periodic reminder command only after confirming consent, deployment scheduling and operational limits. Members can explicitly check their own reminders in the app. Administrators enroll OTP through regular sign-in; superusers deliberately grant staff/roles. Independent verification permissions are separate from publication moderation. Inspect the exact supporting material for any real notice; an official homepage alone does not verify a local date.
 
-Corper Connect is community advice, without official-answer badges or NYSC membership claims. Selecting a PPA or CDS reference never grants room admission. Public room text remains readable while signed out, including after an interaction block. Photos, calls and careers remain later phases.
+Corper Connect is community advice, without official-answer badges or NYSC membership claims. Selecting a PPA or CDS reference never grants room admission. Public room text remains readable while signed out, including after an interaction block. Public PPA/housing photos, calls and careers remain later phases.
 
 ## Private messaging
 
 Message requests start off. Verified members can enable requests in My messages → Message preferences, then request a private chat with an author from a visible community question or answer. Both people must enable requests. Only one introduction is sent until acceptance; decline or closure stops repeat requests for the same pair. There is no member directory or recipient-identifier lookup.
 
-Conversation and inbox routes are participant-only, including for staff and superusers. Existing community blocks stop new messages in both directions and suppress unread markers; existing history remains available to its participants for reference and reporting. Disabling requests closes pending requests while preserving accepted conversations. Read markers are private; no email, SMS, push, read receipts, presence, typing indicators, attachments or calls are added. Members refresh the inbox or conversation to see new activity.
+Conversation, photo and inbox routes are participant-only, including for staff and superusers. Existing community blocks stop new messages in both directions and suppress unread markers; existing history remains available to its participants for reference and reporting. Disabling requests closes pending requests while preserving accepted conversations. Read markers are private; no email, SMS, push, read receipts, presence, typing indicators or calls are added. Members refresh the inbox or conversation to see new activity.
 
-Messages are stored on the service and are not end-to-end encrypted. Reporting explicitly shares the selected message's text, sending time and sender display name, plus the reporter's explanation, with separately authorised report reviewers. Report review does not allow browsing other conversation messages. Decisions retain an audit record. Do not register raw conversations or messages in the moderation admin, publish private message content or add it to offline caching/logs. Protect production database access, backups and retention/deletion processes before opening this feature to users.
+Photo sharing is a separate preference and starts off. Both members must enable it and remain active with verified emails before a photo can be sent in an accepted conversation. Requests remain text only. Turning photos off prevents new photo sharing and automatic inline previews, while allowing a member to explicitly open an existing photo for reference or reporting. All member photo sharing is free.
+
+Each upload contains one still JPEG, PNG or WebP image of at most 8 MiB and 16 million pixels, with a required description of up to 500 characters and an explicit permission-to-share confirmation. Actual decoding determines the format. Animated images and SVG are rejected. The processor rotates the image, limits its long edge to 1,600 pixels, strips embedded metadata including GPS, and saves a fresh JPEG of at most 2 MiB. Original upload bytes and filenames are not retained. Removing metadata does not conceal information visible in the picture. There are no public PPA or accommodation photo galleries in this release.
+
+Messages and photos are stored on the service and are not end-to-end encrypted. Reporting explicitly shares the selected message's text, sending time and sender display name, plus the reporter's explanation, with separately authorised report reviewers. A photo-message report also shares an independent copy of that selected processed image after the report form discloses this. Report review does not allow browsing other conversation messages or photos. Decisions retain an audit record. Do not register raw conversations, messages or photos in the moderation admin, publish private message content or add it to offline caching/logs. Protect production database access, backups and retention/deletion processes before opening this feature to users.
 
 `bootstrap_roles` defines a separate `MessengerSafetyReviewer` role without assigning it to any account. A superuser must explicitly grant this role to an appropriate staff reviewer; report administration still requires enrolled OTP. The public-content Moderator role does not grant access to private message reports.
+
+## Private photo storage
+
+Production photo uploads and image viewing start disabled. Keep `PPA_PHOTOS_ENABLED=False` until private durable storage, access permissions, backup/restore and retention responsibilities are ready. Text messaging remains available while photos are disabled. Do not store production images on a free service's ephemeral filesystem or in a static-file directory.
+
+For production, set `PPA_PHOTO_STORAGE_BACKEND=s3`, `PPA_PHOTO_BUCKET` and `PPA_PHOTO_S3_REGION` in protected hosting settings. An S3-compatible provider can use `PPA_PHOTO_S3_ENDPOINT_URL`, which must use verified HTTPS. Set both `PPA_PHOTO_S3_ACCESS_KEY_ID` and `PPA_PHOTO_S3_SECRET_ACCESS_KEY`, or use an operator-managed IAM role. Grant only the necessary private bucket/object operations. Block public bucket access, use encryption at rest, and confirm an unsigned object request is denied before enabling `PPA_PHOTOS_ENABLED=True`. Hosting/storage costs are the operator's responsibility; member photo sharing stays free.
+
+The application never generates public or presigned storage URLs. Every image is delivered by an authenticated application endpoint with current participant or selected-report reviewer checks, `private, no-store`, `nosniff` and same-origin resource protection. Reviewer image access also checks a current confirmed OTP device. External object-storage credentials, networking and bucket policy were not exercised by the local tests.
+
+In development, `DEBUG=True` enables the local photo capability by default, but each member's consent remains off. Use the `filesystem` backend and, optionally, an absolute `PPA_PHOTO_STORAGE_ROOT` outside served directories. Local files/directories use private permissions and are ignored by Git. The production example file deliberately keeps photos disabled; enable the appropriate development settings explicitly if copying that file.
+
+Photo sending has additional limits of ten images per day, three per five minutes and 100 MiB of retained attachments per sender, alongside the shared text-message allowance. Image decoding runs once per worker process at a time, with a short bounded wait before asking a member to retry. Size/pixel limits and this concurrency bound control memory use; size worker counts to the host's available memory. Provider timeouts are bounded. File storage and database transactions are different resources: photo sends and photo reports control their own durable commit and reject a caller-owned outer transaction. Failure cleanup preserves any object that a committed row still references; process interruption or unavailable storage/database can leave a private orphan for later maintenance.
+
+Back up the private objects with the database and rehearse a coordinated restore. Account/message deletion removes database attachment references; it does not directly erase storage objects or independently retained reported evidence. Follow the operator's approved deletion and report-retention process. Review a bounded orphan scan first:
+
+```bash
+python manage.py prune_private_photos --limit 500 --min-age-hours 168
+```
+
+The scan is a dry run. Only the explicit `--delete` option removes unreferenced objects from the two application-owned photo namespaces after at least seven days. Referenced attachments and report evidence are retained, even for resolved cases. Coordinate maintenance with backups/restores and schedule it only after reviewing the dry run. This release creates no provider resources, cleanup schedule or deployment automatically.
+
+For repeated production scans, add `--cursor-file` with a file in a private, operator-owned directory. Object-backed scans then resume after the previous page and wrap after reaching the end, with a shared budget divided between conversation and report objects. Cursor files use private permissions and contain opaque object identifiers; keep them outside source control and public directories. The local development filesystem supports a bounded sample only and rejects persistent cursors because directory order is unstable.

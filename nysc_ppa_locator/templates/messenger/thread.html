@@ -21,6 +21,10 @@
       <article class="rounded-2xl border p-4 sm:p-5 {% if message.is_own %}border-emerald-200 bg-emerald-50{% else %}border-slate-200 bg-white{% endif %}">
         <p class="muted">{% if message.is_own %}You{% else %}{{ message.sender_name }}{% endif %} · <time datetime="{{ message.sent_at|date:'c' }}">{{ message.sent_at|date:'j M Y, H:i' }}</time></p>
         <p>{{ message.body|linebreaksbr }}</p>
+        {% if message.photo %}
+          {% if show_photo_previews %}<figure class="m-0"><a href="{{ message.photo.url }}"><img src="{{ message.photo.url }}" alt="{{ message.body }}" width="{{ message.photo.width }}" height="{{ message.photo.height }}" loading="lazy" class="max-w-full h-auto rounded-xl"></a><p><a href="{{ message.photo.url }}">View full photo</a></p></figure>
+          {% else %}<p>Photo attached. <a href="{{ message.photo.url }}">View photo</a></p>{% endif %}
+        {% endif %}
         {% if not message.is_own %}<p><a href="{% url 'messenger:report' thread.id message.id %}">Report this message privately</a></p>{% endif %}
       </article>
     </li>
@@ -28,7 +32,9 @@
   </ol>
   {% if latest_message_id %}<form method="post" action="{% url 'messenger:read' thread.id %}" class="actions">{% csrf_token %}<input type="hidden" name="message_id" value="{{ latest_message_id }}"><button class="secondary">Mark displayed messages read</button></form>{% endif %}
   {% if thread.can_send %}
-  <section class="card section" aria-labelledby="compose-title"><h2 id="compose-title">Write a message</h2><form method="post" action="{% url 'messenger:send' thread.id %}" class="stack">{% csrf_token %}{{ form.as_p }}<p class="field-hint">Text only. Keep private documents, passwords, bank details and live locations out of messages. Links are shown as text.</p><button type="submit">Send message</button></form></section>
+  <section class="card section" aria-labelledby="compose-title"><h2 id="compose-title">Write a message</h2><form method="post" action="{% url 'messenger:send' thread.id %}" class="stack">{% csrf_token %}{{ form.as_p }}<p class="field-hint">Keep private documents, passwords, bank details and live locations out of messages. Links are shown as text.</p><button type="submit">Send message</button></form>
+    {% if thread.can_send_photo %}<div class="actions"><a class="button secondary" href="{% url 'photos:upload' thread.id %}">Share a photo</a></div>{% else %}<p class="muted">Photo sharing is optional. <a href="{% url 'messenger:preferences' %}">Manage photo sharing in Message preferences</a>.</p>{% endif %}
+  </section>
   {% elif thread.status == 'accepted' and not thread.is_blocked %}<p class="notice">Sending is currently unavailable. Both accounts need to remain active with verified email addresses.</p>{% endif %}
   <details><summary>Conversation safety tools</summary>
     <p>Closing ends this conversation for both members and stops repeat requests. Blocking also prevents supported community interactions and alerts in either direction. Your conversation history remains available to you.</p>

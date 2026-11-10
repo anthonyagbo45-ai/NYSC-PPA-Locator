@@ -54,7 +54,7 @@ class PrivateMessagingServiceTests(Fixtures, TestCase):
 
     def test_default_off_and_both_participants_must_opt_in(self):
         MessengerPreference.objects.all().delete()
-        self.assertEqual(services.get_preferences(self.alice), {'allow_requests': False})
+        self.assertEqual(services.get_preferences(self.alice), {'allow_requests': False, 'allow_photos': False})
         with self.assertRaises(ValidationError):
             self.request()
         services.save_preferences(self.bob, True)
@@ -105,7 +105,7 @@ class PrivateMessagingServiceTests(Fixtures, TestCase):
             self.request()
         with self.assertRaises(PermissionDenied):
             services.save_preferences(self.alice, True)
-        self.assertEqual(services.save_preferences(self.alice, False), {'allow_requests': False})
+        self.assertEqual(services.save_preferences(self.alice, False), {'allow_requests': False, 'allow_photos': False})
 
     def test_intro_is_single_request_and_replays_are_idempotent(self):
         nonce = uuid.uuid4()

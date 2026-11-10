@@ -2,6 +2,8 @@
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import MessageReport, ReportDecision
 from .services import moderate_report
@@ -54,7 +56,7 @@ class MessageReportAdmin(ReportEvidenceAdmin):
     list_filter = ('status', 'category')
     fields = (
         'category', 'details', 'reported_sender_name', 'reported_sent_at',
-        'reported_text', 'status', 'moderator_note', 'moderated_at',
+        'reported_text', 'reported_photo', 'status', 'moderator_note', 'moderated_at',
         'created_at', 'updated_at',
     )
     readonly_fields = tuple(name for name in fields if name not in ('status', 'moderator_note'))
@@ -72,6 +74,19 @@ class MessageReportAdmin(ReportEvidenceAdmin):
         # Django's readonly-field rendering escapes text. Do not mark it safe,
         # turn links into HTML, or load neighbouring conversation messages.
         return obj.evidence.get('body', '')
+
+    @admin.display(description='Selected reported photo')
+    def reported_photo(self, obj):
+        from photos.models import PhotoEvidence
+
+        if not PhotoEvidence.objects.filter(report_id=obj.pk).exists():
+            return 'No photo included in this report.'
+        # This application endpoint checks fresh reviewer rights and OTP. Never
+        # publish a storage key, signed object URL or conversation attachment URL.
+        return format_html(
+            '<a href="{}">View selected reported photo</a>',
+            reverse('photos:reported_content', args=[obj.pk]),
+        )
 
     def save_model(self, request, obj, form, change):
         if not change:

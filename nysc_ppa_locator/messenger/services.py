@@ -149,20 +149,25 @@ def _request_available(member, other):
 
 def get_preferences(user):
     user = _member(user)
-    return {'allow_requests': MessengerPreference.objects.filter(user=user, allow_requests=True).exists()}
+    row = MessengerPreference.objects.filter(user=user).values('allow_requests', 'allow_photos').first()
+    return row or {'allow_requests': False, 'allow_photos': False}
 
 
 @transaction.atomic
-def save_preferences(user, allow_requests):
+def save_preferences(user, allow_requests, allow_photos=None):
     if not isinstance(allow_requests, bool):
         raise ValidationError('Choose a valid message-request preference.')
+    if allow_photos is not None and not isinstance(allow_photos, bool):
+        raise ValidationError('Choose a valid photo-sharing preference.')
     fresh = _member(user)
     member = get_user_model().objects.select_for_update().get(pk=fresh.pk)
-    if not member.is_active or (allow_requests and not member.email_verified):
+    if not member.is_active or ((allow_requests or allow_photos is True) and not member.email_verified):
         raise PermissionDenied('Verify your email before enabling message requests.')
     preference, _ = MessengerPreference.objects.get_or_create(user=member)
     preference.allow_requests = allow_requests
-    preference.save(update_fields=['allow_requests', 'updated_at'])
+    if allow_photos is not None:
+        preference.allow_photos = allow_photos
+    preference.save(update_fields=['allow_requests', 'allow_photos', 'updated_at'])
     if not allow_requests:
         # No participant lock is acquired after these thread locks. This keeps
         # the lock order compatible with send/request actions and block writes.
@@ -170,7 +175,7 @@ def save_preferences(user, allow_requests):
             Q(low_member=member) | Q(high_member=member), status=Conversation.Status.PENDING,
         ).order_by('pk').values_list('pk', flat=True))
         Conversation.objects.filter(pk__in=ids).update(status=Conversation.Status.CLOSED, updated_at=timezone.now())
-    return {'allow_requests': preference.allow_requests}
+    return {'allow_requests': preference.allow_requests, 'allow_photos': preference.allow_photos}
 
 
 def get_request_context(user, context_type, context_id):
@@ -193,11 +198,21 @@ def _allow_message(member, now):
 
 
 def _safe_message(message, user):
-    return {
+    result = {
         'id': message.pk, 'body': message.body,
         'sender_name': message.sender.public_name if message.sender else 'Former member',
         'is_mine': message.sender_id == user.pk, 'sent_at': message.sent_at,
     }
+    try:
+        photo = message.photo_attachment
+    except Message.photo_attachment.RelatedObjectDoesNotExist:
+        photo = None
+    if photo is not None:
+        result['photo'] = {
+            'id': photo.pk, 'width': photo.width, 'height': photo.height,
+            'url': reverse('photos:content', args=[photo.pk]),
+        }
+    return result
 
 
 @transaction.atomic
@@ -270,7 +285,7 @@ def send_message(user, conversation_id, body, client_token):
     if row.status != Conversation.Status.ACCEPTED:
         raise ValidationError('Messages are available only after the recipient accepts the request.')
     body, token = _body(body), _token(client_token)
-    existing = Message.objects.filter(conversation=row, sender=member, client_token=token).select_related('sender').first()
+    existing = Message.objects.filter(conversation=row, sender=member, client_token=token).select_related('sender', 'photo_attachment').first()
     if existing:
         if existing.body != body:
             raise ValidationError('This send token has already been used. Reload the form.')
@@ -280,6 +295,8 @@ def send_message(user, conversation_id, body, client_token):
     message = Message.objects.create(conversation=row, sender=member, body=body, client_token=token)
     row.updated_at = now
     row.save(update_fields=['updated_at'])
+    # Newly created text messages have no attachment; avoid a projection query.
+    message._state.fields_cache['photo_attachment'] = None
     return _safe_message(message, member)
 
 
@@ -345,7 +362,7 @@ def get_thread(user, conversation_id, before=None, limit=50):
     query = Message.objects.filter(conversation=row)
     if before is not None:
         query = query.filter(pk__lt=_positive_id(before))
-    messages = list(query.select_related('sender').order_by('-pk')[:limit+1])
+    messages = list(query.select_related('sender', 'photo_attachment').order_by('-pk')[:limit+1])
     has_older = len(messages) > limit
     messages = messages[:limit]
     next_before = messages[-1].pk if has_older and messages else None
@@ -360,14 +377,28 @@ def get_thread(user, conversation_id, before=None, limit=50):
 
 def get_selected_message(user, conversation_id, message_id):
     row, member, _ = _conversation(user, conversation_id)
-    message = Message.objects.filter(pk=_positive_id(message_id), conversation=row).select_related('sender').first()
+    message = Message.objects.filter(pk=_positive_id(message_id), conversation=row).select_related('sender', 'photo_attachment').first()
     if message is None:
         raise Http404(UNAVAILABLE)
     return _safe_message(message, member)
 
 
-@transaction.atomic
 def report_message(user, conversation_id, message_id, category, details):
+    # Photo copies need an outermost commit so failures can clean up storage.
+    row, _, _ = _conversation(user, conversation_id)
+    message = Message.objects.filter(pk=_positive_id(message_id), conversation=row).select_related('photo_attachment').first()
+    if message is None:
+        raise Http404(UNAVAILABLE)
+    try:
+        message.photo_attachment
+    except Message.photo_attachment.RelatedObjectDoesNotExist:
+        return _create_message_report(user, conversation_id, message_id, category, details)
+    from photos.services import report_photo_message
+    return report_photo_message(user, conversation_id, message_id, category, details)
+
+
+@transaction.atomic
+def _create_message_report(user, conversation_id, message_id, category, details):
     row, member, _ = _conversation(user, conversation_id, lock=True)
     message = Message.objects.filter(pk=_positive_id(message_id), conversation=row).select_related('sender').first()
     if message is None:

@@ -21,6 +21,7 @@ urlpatterns = [
     path('community/', include('community.urls')),
     path('rooms/', include('local_rooms.urls')),
     path('messenger/', include('messenger.urls')),
+    path('photos/', include('photos.urls')),
     path('', include('ppas.submission_urls')),
     path('', include('service_year.urls')),
     path('', include('ppas.urls')),       # Root landing page, PPA search, details & location API
