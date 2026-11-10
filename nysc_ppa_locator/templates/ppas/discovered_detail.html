@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}{{ place.name }} | PPA Locator{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'locator/navigation.css' %}">{% endblock %}
+{% block extra_scripts %}<script defer src="{% static 'locator/navigation.js' %}"></script>{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'search_ppa' %}?{{ back_query }}">← Back to your search</a></p>
+<div class="place-layout"><article class="card section place-information"><span class="badge">Discovered place</span><h1>{{ place.name }}</h1><p class="place-address">{{ place.address }}</p><p><strong>Search area: {{ place.area }}</strong></p><button type="button" class="mobile-directions-trigger" data-open-directions aria-haspopup="dialog" aria-controls="route-dialog">Get directions</button>
+<p class="notice {% if place.location_status == 'mismatch' %}warning{% endif %}">{{ place.location_message }}</p>
+<p class="muted">Check that this is the organisation and branch on your posting information. A map result does not establish an NYSC PPA relationship.</p>
+<div class="actions"><button type="button" class="secondary" data-copy="{{ place.name }} — {{ place.address }}">Copy address</button></div><p id="action-feedback" role="status" class="muted"></p>
+<p class="provider-credit">Place information supplied by <a href="https://maps.google.com/" target="_blank" rel="noopener noreferrer">Google Maps</a>.</p>
+{% for credit in place.attributions %}<p class="provider-credit">{% if credit.provider_uri %}<a href="{{ credit.provider_uri }}" target="_blank" rel="noopener noreferrer">{{ credit.provider }}</a>{% else %}{{ credit.provider }}{% endif %}</p>{% endfor %}
+</article><aside class="card section destination-action"><p class="eyebrow">Your next step</p><h2>Get to your PPA</h2><p>Open the route here in PPA Locator. Choose driving or walking and a starting point.</p>{% include 'ppas/navigation_panel.html' %}<p class="muted">Live spoken guidance is available through the separate navigation-app option.</p></aside></div>
+{% if place.location_status != 'mismatch' %}<section class="card section"><h2>Help the next corps member find it</h2>
+{% if user.is_authenticated and user.email_verified %}<p>If you know this organisation is your PPA, add its independently known details to the shared directory.</p><details><summary>This is my PPA</summary>{% include 'ppas/contribution_form.html' %}</details>
+{% elif user.is_authenticated %}<p><a href="{% url 'profile' %}">Verify your email</a> before contributing this place.</p>{% else %}<p>You can get directions now. <a href="{% url 'login' %}">Sign in</a> when you want to contribute the place for others.</p>{% endif %}</section>{% endif %}
+{% endblock %}

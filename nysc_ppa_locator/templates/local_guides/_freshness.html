@@ -1,0 +1,7 @@
+<div class="badges">
+    <span class="badge">{{ listing.source_label }}</span>
+    <span class="badge">{{ listing.verification_label }}</span>
+</div>
+<p class="muted">Observed {{ listing.observed_on|date:"j M Y" }} · {% if listing.checked_at %}Last checked {{ listing.checked_at|date:"j M Y" }}{% else %}No separate source check recorded{% endif %}<br>
+{% if listing.last_reconfirmed_at %}Contributor reconfirmed {{ listing.last_reconfirmed_at|date:"j M Y" }} · {% endif %}Reconfirmation due {{ listing.expires_at|date:"j M Y" }}</p>
+{% if listing.is_stale %}<p class="notice warning">Outdated information. Confirm current details before relying on this report; earlier verification is historical.</p>{% endif %}

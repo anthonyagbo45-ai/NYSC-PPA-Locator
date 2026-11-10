@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 space-y-5">
+    <h1 class="text-2xl font-bold">My saved destinations</h1>
+    <p>Open a saved destination for its current directions and confirmation status.</p>
+    <ul class="space-y-4">
+    {% for ppa in ppas %}
+        <li class="bg-white rounded border p-4">
+            <a class="font-semibold underline" href="{% url 'ppa_detail' ppa.pk %}">{{ ppa.name }}</a>
+            <p>{{ ppa.lga.name }}, {{ ppa.state.name }}</p>
+            <p class="text-sm">{{ ppa.get_status_display }} · {{ ppa.get_location_status_display }}</p>
+            {% if ppa.source == 'legacy' %}<p class="text-sm">Existing record: source needs review.</p>{% endif %}
+            {% if ppa.last_confirmed_at %}<p class="text-sm">Last member confirmation: {{ ppa.last_confirmed_at|date:"j M Y" }}</p>{% endif %}
+        </li>
+    {% empty %}
+        <li>No destinations saved yet. <a class="underline" href="{% url 'live_search' %}">Find your PPA</a> and choose “Save destination”.</li>
+    {% endfor %}
+    </ul>
+    {% include 'pagination.html' %}
+</div>
+{% endblock %}

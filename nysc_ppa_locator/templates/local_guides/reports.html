@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}My local guidance reports · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Private report history</p><h1>My local guidance reports</h1>
+    <p>Only your submitted report details and review status appear here. Private investigation notes are not published.</p>
+    <div class="stack">{% for report in reports %}<article class="card"><h2>{{ report.category_label }}</h2><p><span class="badge">{{ report.status_label }}</span> · {{ report.created_at|date:"j M Y" }}</p><p>{{ report.details|linebreaksbr }}</p>{% if report.proposed_correction %}<p>Suggested correction: {{ report.proposed_correction|linebreaksbr }}</p>{% endif %}</article>{% empty %}<p class="empty-state">You have not submitted a local guidance report.</p>{% endfor %}</div>
+    {% include 'pagination.html' %}<p><a href="{% url 'local_guides:home' %}">Back to local guidance</a></p>
+</section>
+{% endblock %}

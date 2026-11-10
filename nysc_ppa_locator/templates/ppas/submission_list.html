@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}My PPA proposals · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Your contributions</p><h1>My PPA proposals</h1>
+  <p>Drafts and pending proposals are private. Approved proposals may add a directory entry, without certifying NYSC approval. Withdrawing a proposal does not erase an existing directory record.</p>
+  <p><a class="button" href="{% url 'ppa_submissions:submit' %}">Suggest another PPA</a></p><div class="stack">
+  {% for proposal in proposals %}<article class="card"><h2>{{ proposal.name }}</h2><p>{{ proposal.lga__name }}, {{ proposal.state__name }} · <span class="badge">{{ proposal.publication_label }}</span></p>
+    <p class="muted">Observed {{ proposal.observed_on|date:"j M Y" }} · Reconfirm by {{ proposal.expires_at|date:"j M Y" }}</p>
+    <p>{{ proposal.source_label }} · {{ proposal.verification_label }}</p>
+    {% if proposal.is_stale %}<p class="notice">This proposal is outdated. Recheck the details, update the observation date and submit it for review before relying on it.</p>{% endif %}
+    {% if proposal.published_ppa_id %}<p><a href="{% url 'ppa_detail' proposal.published_ppa_id %}">View directory entry</a></p>{% endif %}
+    <p><a href="{% url 'ppa_submissions:history' proposal.id %}">My proposal history</a></p>
+    {% if proposal.publication_status != 'withdrawn' %}<div class="actions"><a class="button secondary" href="{% url 'ppa_submissions:edit' proposal.id %}">Edit proposal</a><form method="post" action="{% url 'ppa_submissions:withdraw' proposal.id %}">{% csrf_token %}<button type="submit" class="secondary">Withdraw proposal</button></form></div>{% endif %}
+  </article>{% empty %}<p class="empty-state">No PPA proposals yet. Search first, then suggest a public organisation you know independently.</p>{% endfor %}</div>
+  {% include 'pagination.html' %}
+</section>
+{% endblock %}

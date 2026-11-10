@@ -1,0 +1,9 @@
+{% if independent_provenance %}<aside class="card">
+  <h2>Original reviewed submission</h2>
+  <p><span class="badge">{{ independent_provenance.source_label }}</span> <span class="badge">{{ independent_provenance.verification_label }}</span></p>
+  <p>Originally published {{ independent_provenance.recorded_at|date:"j M Y" }} · Observed {{ independent_provenance.observed_on|date:"j M Y" }}{% if independent_provenance.checked_at %} · Evidence checked {{ independent_provenance.checked_at|date:"j M Y" }}{% endif %} · Reconfirmation due {{ independent_provenance.expires_at|date:"j M Y" }}</p>
+  {% if independent_provenance.details_changed_since %}<p class="notice">Directory details have changed since this original submission. Its historical source checks do not verify the current name, destination or other revised details. Reconfirm before travelling.</p>{% endif %}
+  {% if independent_provenance.is_stale %}<p class="notice">These original details are outdated. Reconfirm them before travelling.</p>{% endif %}
+  {% if independent_provenance.source_url %}<p><a href="{{ independent_provenance.source_url }}" rel="noopener noreferrer" target="_blank">Public supporting source</a></p>{% endif %}
+  <p class="muted">This describes the independently contributed details used when the listing was created. Publication and source checks do not certify NYSC approval or current corps-member acceptance.</p>
+</aside>{% endif %}

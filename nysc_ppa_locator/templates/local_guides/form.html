@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Share{% endif %} {{ kind_label|lower }} · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">Community contribution · {{ kind_label }}</p><h1>{% if editing %}Update your information{% else %}Help someone settle in{% endif %}</h1>
+    <p>Share details you know independently and when you observed them. Drafts are private; submitted information must be moderated before publication. Editing removes earlier approval and verification until a new review.</p>
+    {% if kind == 'housing' %}<p class="notice">Use a general neighbourhood only. Do not enter an exact private home address, personal contact, live location or identity documents. Housing availability needs reconfirmation after 14 days. No fees, deposits or payments are collected by PPA Locator.</p>
+    {% elif kind == 'fare' %}<p class="notice">Use public areas or transport stops. Give a dated estimate per person, without promising a fixed live fare or sharing anyone's private location.</p>
+    {% else %}<p class="notice">Only share legitimate public business information. Do not include private home locations or personal contact details.</p>{% endif %}
+    {% if linked_ppa %}<p>Tagged with <a href="{% url 'ppa_detail' linked_ppa.id %}">{{ linked_ppa.name }}</a>; the selected state and LGA must match.</p>{% endif %}
+    <form method="post" class="card stack">
+        {% csrf_token %}{{ form.non_field_errors }}{{ form.ppa.errors }}{{ form.ppa }}
+        {% for field in form.visible_fields %}{% include 'local_guides/_form_field.html' %}{% endfor %}
+        <p id="location-feedback" class="field-hint" aria-live="polite">Choose the state and LGA where this information applies.</p>
+        {{ form.action.errors }}
+        <div class="actions"><button type="submit" name="action" value="submit">Submit for review</button><button type="submit" name="action" value="draft" class="secondary">Save private draft</button></div>
+    </form>
+    <p><a href="{% url 'local_guides:mine' %}">My contributions</a> · <a href="{% url 'local_guides:home' %}">Local living guide</a></p>
+</section>
+{% endblock %}

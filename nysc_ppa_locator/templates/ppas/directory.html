@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Find your PPA | PPA Locator{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">From camp to your place of assignment</p><h1>Your PPA.<br>Your next destination.</h1>
+<p>Search the name on your posting information, choose the correct branch, and get a route here in PPA Locator.</p><p class="hero-note">Free to browse · No account needed for directions</p></section>
+<section class="card search-card" aria-label="Search directory">
+<form method="get" id="directory-search" class="search-form"><input type="hidden" name="find" value="1">
+{{ search_form.non_field_errors }}
+<div class="search-name"><label for="query">What is the name of your PPA?</label><input type="search" id="query" name="q" value="{{ query }}" maxlength="200" enterkeyhint="search" placeholder="Enter a school, hospital or organisation">{{ search_form.q.errors }}<p class="field-hint">Full names and common abbreviations both work. Leave this blank to browse an area.</p></div>
+<div><label for="state-select">State</label><select name="state" id="state-select"><option value="">All states</option>{% for state in states %}<option value="{{ state.pk }}" {% if selected_state == state.pk|stringformat:'s' %}selected{% endif %}>{{ state.name }}</option>{% endfor %}</select>{{ search_form.state.errors }}</div>
+<div><label for="lga-select">Local government</label><select name="lga" id="lga-select"><option value="">All LGAs in this state</option>{% for lga in lgas %}<option value="{{ lga.pk }}" {% if selected_lga == lga.pk|stringformat:'s' %}selected{% endif %}>{{ lga.name }}</option>{% endfor %}</select>{{ search_form.lga.errors }}</div>
+<div><label for="category">Category</label><select name="category" id="category">{% for value,label in search_form.fields.category.choices %}<option value="{{ value }}" {% if search_form.category.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>{{ search_form.category.errors }}</div>
+<div class="search-submit"><button type="submit">Find my PPA</button></div><p id="location-feedback" class="field-hint search-name" role="status"></p>
+</form></section>
+<section class="section" aria-labelledby="directory-heading"><div class="section-heading"><div><p class="eyebrow">Find. Check. Go.</p><h2 id="directory-heading">{% if possible_matches %}Could this be your PPA?{% else %}Places in the community directory{% endif %}</h2></div>{% if saved_ppas %}<span class="result-count">{{ page_obj.paginator.count }} match{{ page_obj.paginator.count|pluralize }}</span>{% endif %}</div>
+<p class="muted">{% if possible_matches %}The spelling may differ. Check the full name and branch before choosing.{% else %}Choose a place to see its address, entrance notes and directions. Community confirmations are not official NYSC endorsement.{% endif %}</p>
+{% if saved_ppas %}<div class="cards results-grid">{% for ppa in saved_ppas %}<article class="card result-card">
+<div class="badges"><span class="badge {{ ppa.status }}">{{ ppa.get_status_display }}</span>{% if ppa.source == 'legacy' %}<span class="badge">Source needs review</span>{% endif %}</div>
+<h3><a href="{% url 'ppa_detail' ppa.pk %}">{{ ppa.name }}</a></h3><p class="place-area">{{ ppa.lga.name }}, {{ ppa.state.name }}</p>{% if ppa.address %}<p>{{ ppa.address }}</p>{% endif %}
+<p class="muted">{{ ppa.confirmation_total }} member confirmation{{ ppa.confirmation_total|pluralize }}{% if ppa.last_confirmed_at %} · {{ ppa.last_confirmed_at|date:'j M Y' }}{% endif %}</p>
+<a class="button secondary result-action" href="{% url 'ppa_detail' ppa.pk %}">View PPA details <span aria-hidden="true">→</span></a></article>{% endfor %}</div>{% include 'pagination.html' %}
+{% else %}<div class="empty-state"><h3>{% if selected_state or query %}No saved match yet{% else %}Start with a PPA name or an area{% endif %}</h3><p>{% if selected_state or query %}Check the spelling or try the organisation’s full name. Select a state and LGA to widen the search near your posting.{% else %}Other members’ contributions help you find the right organisation and branch.{% endif %}</p></div>{% endif %}
+</section>
+<section class="card section"><h2>Missing from the directory?</h2><p>You can suggest a PPA from your own posting information or personal knowledge, even when it is absent from Google. A moderator reviews it before it becomes a shared listing.</p><a class="button secondary" href="{% url 'ppa_submissions:overview' %}">Suggest a missing PPA</a></section>
+<section class="card section discovery-section" aria-labelledby="discovery-heading"><h2 id="discovery-heading">More places near your posting</h2><p>Still looking? We can check additional locations in your selected state and LGA.</p>
+<form method="get"><input type="hidden" name="q" value="{{ query }}"><input type="hidden" name="state" value="{{ selected_state }}"><input type="hidden" name="lga" value="{{ selected_lga }}"><input type="hidden" name="google" value="1"><button type="submit" class="secondary">Find more locations</button></form>
+{% if provider_error %}<p class="notice warning" role="alert">{{ provider_error }}</p>{% endif %}
+{% if places %}<div class="cards results-grid discovered-results">{% for place in places %}<article class="card result-card"><span class="badge">Discovered place · PPA relationship unconfirmed</span>
+<form method="post" action="{% url 'discovered_place' %}" class="preview-select">{% csrf_token %}<input type="hidden" name="preview_token" value="{{ place.preview_token }}"><button type="submit" class="place-select"><span class="place-select-name">{{ place.name }}</span><span class="place-select-address">{{ place.address }}</span><span class="place-select-action">View PPA details <span aria-hidden="true">→</span></span></button></form>
+<p class="notice {% if place.location_status == 'mismatch' %}warning{% endif %}">{{ place.location_message }}</p>
+{% for credit in place.attributions %}<p class="provider-credit">{% if credit.provider_uri %}<a href="{{ credit.provider_uri }}" target="_blank" rel="noopener noreferrer">{{ credit.provider }}</a>{% else %}{{ credit.provider }}{% endif %}</p>{% endfor %}</article>{% endfor %}</div>{% endif %}
+{% if google_searched %}{% if not places %}<p>No additional matches for this search. Try another name or a nearby landmark.</p>{% endif %}<p class="provider-credit">Additional place information supplied by <a href="https://maps.google.com/" target="_blank" rel="noopener noreferrer">Google Maps</a>.</p>{% endif %}
+</section>
+{% endblock %}

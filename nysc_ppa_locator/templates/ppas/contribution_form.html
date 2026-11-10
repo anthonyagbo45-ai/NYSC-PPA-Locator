@@ -1,0 +1,9 @@
+<form method="post" action="{% url 'save_live_place' %}" class="stack">{% csrf_token %}
+<input type="hidden" name="place_token" value="{{ place_token }}"><input type="hidden" name="state" value="{{ selected_state }}"><input type="hidden" name="lga" value="{{ selected_lga }}">
+<p>Provide directory details from your posting letter or personal knowledge. We retain the Google Place ID as the map reference.</p>
+<label>PPA name from your posting information<input name="name" maxlength="255" required value="{{ query }}"></label>
+<label>Address you know independently <span class="muted">(optional)</span><textarea name="address" maxlength="2000" rows="2"></textarea></label>
+<label>Nearby landmark <span class="muted">(optional)</span><input name="landmark" maxlength="500"></label>
+<label>Entrance instructions <span class="muted">(optional)</span><textarea name="entrance_instructions" maxlength="1000" rows="2"></textarea></label>
+<label class="checkbox"><input type="checkbox" name="community_details_confirmed" required>These details are from my posting information or personal knowledge, and this is the correct LGA.</label>
+<button type="submit">Add this PPA to the community directory</button></form>

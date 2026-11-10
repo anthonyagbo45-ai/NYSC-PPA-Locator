@@ -1,0 +1,15 @@
+.git
+.venv
+**/venv
+**/.venv
+**/.env
+**/.env.*
+**/db.sqlite3
+**/*.sqlite3*
+**/*.gpg
+**/media
+**/staticfiles
+**/__pycache__
+**/*.pyc
+**/*.dump
+**/node_modules

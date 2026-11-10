@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}<div class="max-w-md mx-auto p-8"><h1>Administrator two-factor authentication</h1>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if enabled %}<p>Your authenticator is enrolled. Administrator sign-in requires a password and an authenticator or recovery code.</p>
+{% if recovery_codes %}<h2>Save these recovery codes now</h2><p>Each code works once. Keep them in a secure password manager; they will not be shown again.</p><ul>{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>{% endif %}<a href="{% url 'admin:index' %}">Open administration</a>
+{% elif setup_key %}<p>In your authenticator app, add a time-based account named NYSC PPA Locator using this setup key:</p><p><code>{{ setup_key }}</code></p>
+<p><a href="{{ setup_url }}">Open an installed authenticator app</a></p>
+<form method="post">{% csrf_token %}<input type="hidden" name="step" value="verify"><label for="token">Authenticator code</label><input name="token" id="token" autocomplete="one-time-code" inputmode="numeric" required maxlength="6"><button>Confirm enrollment</button></form>
+{% else %}<p>Confirm your account password to enroll an authenticator. Administrator access is unavailable until enrollment is complete.</p><form method="post">{% csrf_token %}<input type="hidden" name="step" value="password"><label for="password">Current password</label><input id="password" name="password" type="password" autocomplete="current-password" required><button>Start enrollment</button></form>{% endif %}</div>{% endblock %}

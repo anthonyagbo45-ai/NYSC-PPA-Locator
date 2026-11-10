@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}My contributions · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">Your community contributions</p>
+    <h1>My PPA information</h1>
+    <p>Drafts and pending reports are private. Approval to publish does not mean a claim has been independently checked. You can withdraw your own reports at any time.</p>
+    <div class="stack">
+    {% for claim in claims %}
+        <article class="card">
+            <h2><a href="{% url 'ppa_detail' claim.ppa_id %}">{{ claim.ppa__name }}</a></h2>
+            <p><strong>{{ claim.topic_label }}</strong> · <span class="badge">{{ claim.publication_label }}</span></p>
+            <p>{{ claim.content|linebreaksbr }}</p>
+            <p class="muted">{{ claim.source_label }} · {{ claim.verification_label }}<br>Observed {{ claim.observed_on|date:"j M Y" }} · Reconfirm by {{ claim.expires_at|date:"j M Y" }}</p>
+            {% if claim.publication_status != 'archived' %}
+            <div class="actions">
+                <a class="button secondary" href="{% url 'ppa_profiles:edit_claim' claim.ppa_id claim.id %}">Edit contribution</a>
+                <form method="post" action="{% url 'ppa_profiles:archive_claim' claim.id %}">{% csrf_token %}<button type="submit" class="secondary">Withdraw contribution</button></form>
+            </div>
+            {% endif %}
+        </article>
+    {% empty %}
+        <p class="empty-state">No contributions yet. Open a PPA profile and share what you know.</p>
+    {% endfor %}
+    </div>
+    {% include 'pagination.html' %}
+    <p><a href="{% url 'search_ppa' %}">Find a PPA</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}My spending limit | PPA Locator{% endblock %}
+{% block content %}
+<section class="card section max-w-3xl"><p><a href="{% url 'budgeting:home' %}">← My budget</a></p><p class="eyebrow">Private planning</p><h1>My spending limit</h1><p>Set a voluntary monthly limit in Nigerian naira. This does not move money or collect bank information.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Save my limit</button></form>
+{% if existing_budget %}<details><summary>Remove my {{ existing_budget.month|date:'F Y' }} limit</summary><p>This keeps all expenses and removes only the spending limit for the selected month.</p><form method="post" action="{% url 'budgeting:budget_delete' %}" class="stack">{% csrf_token %}{{ delete_form.as_p }}<button type="submit" class="secondary">Remove spending limit</button></form></details>{% endif %}</section>
+{% endblock %}

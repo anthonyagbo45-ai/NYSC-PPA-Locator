@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Share{% endif %} a service resource | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Community contribution · {% if resource_type == 'group' %}CDS group context{% else %}CDS or clearance information{% endif %}</p><h1>{% if editing %}Update your contribution{% else %}Share a useful service resource{% endif %}</h1>
+<p>Use independently known public information and an attributable reference when available. Drafts stay private; submitted information enters moderation. Editing resets publication and stronger verification until a new review.</p>
+{% include 'service_resources/_disclaimer.html' %}
+<p class="notice">Do not enter private member contacts, exact private residences, state codes, posting letters or clearance documents. A contributor's relationship to an organisation is a report, not automatically verified authority.</p>
+<form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form.visible_fields %}{% include 'service_resources/_field.html' %}{% endfor %}
+{% if resource_type == 'notice' %}<datalist id="resource-timezones"><option value="Africa/Lagos"><option value="UTC"><option value="Africa/Casablanca"><option value="Europe/London"><option value="America/New_York"></datalist><p class="field-hint">For a group-specific notice, open the published group's profile and choose Share a sourced update. Optional dates are interpreted in the time zone you enter; unclear clock-change times must be entered in UTC or at an unambiguous time.</p>{% endif %}
+<p id="location-feedback" class="field-hint" aria-live="polite">Choose the state and LGA where this information applies.</p>{{ form.action.errors }}
+<div class="actions"><button type="submit" name="action" value="submit">Submit for review</button><button type="submit" name="action" value="draft" class="secondary">Save private draft</button></div></form>
+<p><a href="{% url 'service_resources:mine' %}">My contributions</a> · <a href="{% url 'service_resources:home' %}">Browse service resources</a></p></section>
+{% endblock %}

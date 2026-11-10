@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}{{ resource.title }} | CDS resources{% endblock %}
+{% block content %}
+<p class="breadcrumb"><a href="{% url 'service_resources:cds' %}?view=groups">CDS group resources</a></p>
+<article class="card section">{% if private_preview %}<p class="notice warning">Your private preview · {{ resource.publication_label }}. Other members cannot read this draft or pending contribution.</p>{% endif %}
+<p class="eyebrow">Reported CDS group context</p><h1>{{ resource.title }}</h1><p class="place-area">{{ resource.lga_name }}, {{ resource.state_name }}</p>{% include 'service_resources/_freshness.html' %}
+<p>{{ resource.description|linebreaksbr }}</p>{% if resource.venue_hint %}<h2>Public venue context</h2><p>{{ resource.venue_hint }}</p>{% endif %}
+{% if resource.source_url %}<p><a href="{{ resource.source_url }}" target="_blank" rel="nofollow noopener noreferrer">Public supporting source</a></p>{% endif %}
+{% if resource.public_contact_url %}<p><a href="{{ resource.public_contact_url }}" target="_blank" rel="nofollow noopener noreferrer">Public organisation information page</a></p>{% endif %}
+{% include 'service_resources/_disclaimer.html' %}
+{% if not private_preview %}<div class="actions">{% if not resource.is_stale %}<a class="button secondary" href="{% url 'service_resources:select_group' %}?group={{ resource.id }}">Choose as my private CDS preference</a>{% endif %}<a href="{% url 'service_resources:report_group' resource.id %}">Report a problem or correction</a></div>{% endif %}
+{% if own %}<p><a href="{% url 'service_resources:edit_group' resource.id %}">Edit my contribution</a> · <a href="{% url 'service_resources:group_history' resource.id %}">My private revision history</a></p>{% endif %}</article>
+<section class="section"><h2>Current reports for this group</h2><p>These reports are specific to the named group. Check each source and date; they do not establish a common day for all members in this LGA.</p><div class="cards">{% for resource in notices %}{% include 'service_resources/_card.html' with is_groups=False %}{% empty %}<p class="empty-state">No current published notices for this group.</p>{% endfor %}</div>{% include 'pagination.html' %}</section>
+{% if not private_preview and not resource.is_stale %}<p><a class="button secondary" href="{% url 'service_resources:create_notice' %}?group={{ resource.id }}">Share a sourced update for this group</a></p>{% endif %}
+{% endblock %}

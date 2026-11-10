@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}My contribution history · PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl">
+    <p class="eyebrow">Private history</p><h1>{{ listing.title }}</h1>
+    <p>Your most recent 100 recorded versions are available here. Private moderation evidence and housing authorisation explanations are excluded.</p>
+    <div class="stack">
+    {% for revision in revisions %}
+        <article class="card">
+            <h2>{{ revision.title }}</h2><p>{{ revision.created_at|date:"j M Y, H:i" }} · <span class="badge">{{ revision.publication_label }}</span></p>
+            <p>{{ revision.summary|linebreaksbr }}</p>
+            <p>{{ revision.area }} · Observed {{ revision.observed_on }}<br>Source: {{ revision.source_label }} · Verification: {{ revision.verification_label }}</p>
+            {% if revision.kind == 'housing' %}
+                <p>Reported rent: {% if revision.details.reported_rent != None %}₦{{ revision.details.reported_rent|floatformat:2 }} {{ revision.details.price_period_label|lower }}{% else %}not recorded{% endif %}<br>{{ revision.details.room_type_label }} · {{ revision.details.availability_label }}</p>
+                {% if revision.details.amenity_labels %}<p>Reported amenities: {{ revision.details.amenity_labels|join:", " }}</p>{% endif %}
+            {% elif revision.kind == 'fare' %}
+                <p>{{ revision.details.origin_area }} → {{ revision.details.destination_area }} · {{ revision.details.mode_label }}<br>₦{{ revision.details.amount_low|floatformat:2 }}–₦{{ revision.details.amount_high|floatformat:2 }} per person</p>
+            {% elif revision.kind == 'service' %}
+                <p>{{ revision.details.category_label }}{% if revision.details.opening_hours %} · {{ revision.details.opening_hours }}{% endif %}</p>
+                {% if revision.details.public_business_address %}<p>{{ revision.details.public_business_address|linebreaksbr }}</p>{% endif %}
+            {% endif %}
+            <p class="muted">{{ revision.reason }}</p>
+        </article>
+    {% empty %}<p class="empty-state">No saved versions yet.</p>{% endfor %}
+    </div>
+    {% include 'pagination.html' %}
+    <p><a href="{% url 'local_guides:mine' %}">My contributions</a></p>
+</section>
+{% endblock %}

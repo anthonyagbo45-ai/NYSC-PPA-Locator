@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Save my assigned PPA | PPA Locator{% endblock %}
+{% block content %}
+<section class="card section max-w-3xl">
+  <p><a href="{% url 'ppa_detail' ppa.pk %}">← Back to this PPA</a></p>
+  <p class="eyebrow">Your private service-year tracker</p><h1>This is my PPA</h1>
+  <h2>{{ ppa.name }}</h2><p>{{ ppa.address }}</p><p>{{ ppa.lga.name }}, {{ ppa.state.name }}</p>
+  <p class="notice">Saving your PPA is your own record. It does not confirm that the organisation accepts corps members or establish NYSC approval.</p>
+  {% if ppa.status == 'disputed' or ppa.status == 'closed' %}<p class="notice warning">This listing is marked {{ ppa.get_status_display|lower }}. Check the organisation and your official posting details before travelling.</p>{% endif %}
+  {% if current_assignment and current_assignment.ppa_id != ppa.pk %}<p class="notice">Your current PPA is {{ current_assignment.ppa.name }}. Saving this place moves that previous PPA and its progress to your private history.</p>{% elif current_assignment %}<p>This place is already your current PPA. Your existing progress and notes will be kept.</p>{% endif %}
+  <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button type="submit">Save as my PPA</button></form>
+  <p class="muted">Your assignment, notes and progress are private to your account. Your bookmarks are kept separately.</p>
+</section>
+{% endblock %}

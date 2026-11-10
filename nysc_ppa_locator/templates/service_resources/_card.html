@@ -1,0 +1,11 @@
+{% load tz %}
+<article class="card result-card">
+  <p class="eyebrow">{% if is_groups %}CDS group context{% else %}{{ resource.kind_label }}{% endif %}</p>
+  <h3><a href="{% if is_groups %}{% url 'service_resources:group_detail' resource.id %}{% else %}{% url 'service_resources:notice_detail' resource.id %}{% endif %}">{{ resource.title }}</a></h3>
+  <p class="place-area">{{ resource.lga_name }}, {{ resource.state_name }}</p>
+  {% if not is_groups %}{% if resource.group_title %}<p>Reported for {{ resource.group_title }}.</p>{% elif resource.group_id %}<p class="muted">The linked group is currently unavailable.</p>{% endif %}
+  {% if resource.event_at %}{% timezone resource.timezone_name %}<p>Reported time: {{ resource.event_at|date:'j M Y, H:i' }} ({{ resource.timezone_name }}).</p>{% endtimezone %}{% else %}<p class="muted">No event time reported.</p>{% endif %}
+  {% if resource.batch_label %}<p class="muted">Reported batch context: {{ resource.batch_label }}</p>{% endif %}{% endif %}
+  {% include 'service_resources/_freshness.html' %}
+  <a class="button secondary result-action" href="{% if is_groups %}{% url 'service_resources:group_detail' resource.id %}{% else %}{% url 'service_resources:notice_detail' resource.id %}{% endif %}">Read source and context</a>
+</article>

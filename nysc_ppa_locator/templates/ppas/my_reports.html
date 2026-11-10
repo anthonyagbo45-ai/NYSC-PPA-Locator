@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 space-y-5">
+    <h1 class="text-2xl font-bold">My submitted reports</h1>
+    <p>These reports are visible to you and the moderation team. Moderators review corrections before updating published directions.</p>
+    <ul class="space-y-4">
+    {% for report in reports %}
+        <li class="border rounded p-4 bg-white space-y-2">
+            <a class="font-semibold underline" href="{% url 'ppa_detail' report.ppa_id %}">{{ report.ppa__name }}</a>
+            <p>{{ report.category_label }} · <strong>{{ report.status_label }}</strong></p>
+            <p>{{ report.details|linebreaksbr }}</p>
+            <p class="text-sm">Submitted {{ report.created_at|date:"j M Y" }}</p>
+        </li>
+    {% empty %}
+        <li>You have not submitted a report yet.</li>
+    {% endfor %}
+    </ul>
+    {% include 'pagination.html' %}
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}<div class="max-w-md mx-auto p-8"><h1>Verify your email</h1>
+{% if valid %}<p>Confirm that this email address belongs to you.</p><form method="post">{% csrf_token %}<button type="submit">Verify email</button></form>
+{% else %}<p>This link is invalid or expired.</p><a href="{% url 'email_verification' %}">Request another verification email</a>{% endif %}
+</div>{% endblock %}

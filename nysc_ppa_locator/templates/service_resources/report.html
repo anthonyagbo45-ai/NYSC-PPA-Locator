@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Report a service resource | PPA Locator{% endblock %}
+{% block content %}
+<section class="section max-w-3xl"><p class="eyebrow">Private correction report</p><h1>Report {{ resource.title }}</h1><p>Describe an incorrect source, changed schedule, fake official claim or privacy issue. Your report enters review and does not automatically overwrite a resource.</p><form method="post" class="card stack">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include 'service_resources/_field.html' %}{% endfor %}<button type="submit">Send private report</button></form><p><a href="{% url 'service_resources:reports' %}">My private reports</a></p></section>
+{% endblock %}

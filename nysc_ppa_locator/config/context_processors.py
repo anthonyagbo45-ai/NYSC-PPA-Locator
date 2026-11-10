@@ -1,11 +1,6 @@
-# config/context_processors.py
-import os
+from django.conf import settings
+
 
 def google_maps_api(request):
-    """
-    Exposes the Google Maps API key to all Django templates.
-    Access it in HTML using {{ GOOGLE_MAPS_API_KEY }}
-    """
-    return {
-        'GOOGLE_MAPS_API_KEY': os.getenv('GOOGLE_MAPS_API_KEY', '')
-    }
+    # Browser keys must have HTTP referrer restrictions; never expose the server key.
+    return {'GOOGLE_MAPS_API_KEY': getattr(settings, 'GOOGLE_MAPS_BROWSER_API_KEY', '')}

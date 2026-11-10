@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit{% else %}Add{% endif %} a private event | PPA Locator{% endblock %}
+{% block content %}
+<header class="hero"><p class="eyebrow">Personal plans</p><h1>{% if editing %}Edit my event{% else %}Add a private event{% endif %}</h1><p>Record a date you have chosen or confirmed separately. This is your own plan, not an official NYSC notice or clearance decision.</p></header>
+<p class="notice">Please confirm with your designated NYSC official. Nobody is automatically marked cleared, accepted or assigned by saving an event.</p>
+{% if not preferences.personal_reminders %}<p class="notice">Personal reminders are currently off. You can save a calendar event now; <a href="{% url 'notifications:preferences' %}">your preferences</a> also need to be enabled before chosen reminders appear.</p>{% endif %}
+<section class="card section"><form method="post" class="stack">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div>{{ field.errors }}{{ field.label_tag }}{{ field }}{% if field.help_text %}<p class="field-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}</div>{% endfor %}<datalist id="reminder-timezones"><option value="Africa/Lagos"><option value="UTC"><option value="Africa/Casablanca"><option value="Europe/London"><option value="America/New_York"></datalist><button type="submit">Save my private event</button></form></section>
+<p><a href="{% url 'notifications:home' %}">Back to my reminders</a></p>
+{% endblock %}
